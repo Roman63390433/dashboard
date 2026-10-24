@@ -101,7 +101,7 @@
   .row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
   .row:last-child { border-bottom: 0; }
   .row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .time { color: var(--muted); width: 46px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .time { color: var(--muted); min-width: 46px; flex-shrink: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
   .done .grow { text-decoration: line-through; color: var(--muted); }
   .tag { font-size: 12px; color: var(--muted); white-space: nowrap; }
@@ -158,7 +158,21 @@
   /* --- Окно «Брифинг дня» --- */
   .overlay { position: fixed; inset: 0; background: rgba(28, 23, 20, .45); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
   .overlay.show { display: flex; }
-  .modal { background: var(--card); border-radius: 18px; padding: 26px; max-width: 480px; width: 100%; }
+  .modal { background: var(--card); border-radius: 18px; padding: 26px; max-width: 480px; width: 100%; max-height: 92vh; overflow-y: auto; }
+  .modal.wide { max-width: 640px; }
+  .modal textarea { margin: 12px 0 16px; }
+  .tag.ok { color: var(--green); font-weight: 600; }
+
+  /* --- Итог дня: кнопки «было / другое время / не было» --- */
+  .rv { border: 1px solid var(--line); background: #fff; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 15px; color: var(--muted); flex-shrink: 0; }
+  .rv.on.rv-done { background: var(--green); border-color: var(--green); color: #fff; }
+  .rv.on.rv-changed { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .rv.on.rv-skipped { background: var(--red); border-color: var(--red); color: #fff; }
+  .rv-item { border-bottom: 1px solid var(--line); }
+  .rv-item .row { border: 0; }
+  .sub { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .sub.late { color: var(--red); }
+  .fact-edit { display: flex; gap: 6px; align-items: center; padding: 0 0 10px; flex-wrap: wrap; }
   .modal h3 { margin: 0 0 14px; font-size: 20px; }
   .modal ul { padding-left: 18px; line-height: 1.7; margin: 0 0 18px; }
 
@@ -170,8 +184,12 @@
     .side-bottom { margin: 0; padding: 0 0 0 10px; border-top: 0; border-left: 1px solid #2f2621; display: flex; }
     .nav-btn { width: auto; white-space: nowrap; padding: 9px 12px; }
     main { padding: 20px 16px 40px; }
-    .grid, .grid.three { grid-template-columns: 1fr; }
+    .grid, .grid.three { grid-template-columns: minmax(0, 1fr); }
     h1 { font-size: 24px; }
+    .card { padding: 18px 16px; }
+    .modal { padding: 20px 16px; }
+    .row { gap: 9px; }
+    .time { font-size: 13px; }
   }
 </style>
 </head>
@@ -208,7 +226,10 @@ const KEY = 'my-dashboard-v1';
 
 const EMPTY = {
   name: '',
-  events: [],        // календарь: { id, date, time, title }
+  events: [],        // календарь: { id, date, time, end, title, extra, fact }
+                     //   fact — как было на самом деле: { status: done | changed | skipped, time, end }
+                     //   extra: true — пункт добавлен в «Итоге дня», в плане его не было
+  days: {},          // заметки «Итога дня»: { '2026-10-26': { note } }
   tasks: [],         // задачи: { id, title, due, important, done }
   projects: [],      // проекты: { id, name, status, progress, deadline, note }
   learn: [],         // хобби — что изучаю: { id, title, done }
@@ -237,7 +258,7 @@ function fixGoals() {
 }
 
 // Что сейчас открыто на экране (это не сохраняем)
-const ui = { view: 'overview', taskFilter: 'active', calMonth: null, calDay: null, goalTab: 'year' };
+const ui = { view: 'overview', taskFilter: 'active', calMonth: null, calDay: null, goalTab: 'year', modal: null, reviewDate: null };
 
 
 // ---------- 2. Мелкие помощники ----------
@@ -332,7 +353,7 @@ function importData(file) {
 function viewOverview() {
   const t = today();
   const name = state.name ? `<span class="name" data-act="name">${esc(state.name)}</span>` : `<span class="name" data-act="name">(нажмите, чтобы указать имя)</span>`;
-  const todayEvents = state.events.filter(e => e.date === t).sort((a, b) => a.time.localeCompare(b.time));
+  const todayEvents = dayEvents(t);
   const important = state.tasks.filter(x => x.important).sort((a, b) => a.done - b.done).slice(0, 6);
   const withDue = state.tasks.filter(x => x.due && !x.done).sort((a, b) => a.due.localeCompare(b.due)).slice(0, 5);
   const active = state.projects.filter(p => p.status === 'В работе');
@@ -345,13 +366,15 @@ function viewOverview() {
   return `
   <div class="head">
     <div><h1>${greeting()}, ${name}</h1><div class="date">${cap(fmt(t, { weekday: 'long', day: 'numeric', month: 'long' }))}</div></div>
-    <button class="btn" data-act="brief">Брифинг дня</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn ghost" data-act="review">Итог дня</button>
+      <button class="btn" data-act="brief">Брифинг дня</button>
+    </div>
   </div>
   <div class="grid">
     <div class="card">
       <h2>Расписание на сегодня</h2>
-      ${todayEvents.length ? todayEvents.map(e => `
-        <div class="row"><span class="time">${esc(e.time || '—')}</span><span class="dot"></span><span class="grow">${esc(e.title)}</span></div>`).join('')
+      ${todayEvents.length ? todayEvents.map(e => evRow(e)).join('')
         : '<div class="empty">На сегодня ничего не запланировано</div>'}
       <div class="more"><button class="link" data-act="go" data-id="calendar">Открыть календарь</button></div>
     </div>
@@ -414,6 +437,29 @@ function viewOverview() {
   </div>`;
 }
 
+// ----- Пункты календаря: план и факт -----
+const span = (a, b) => (a || '—') + (b ? '–' + b : '');
+// Если в «Итоге дня» указано другое время — показываем его, иначе плановое
+const isChanged = e => e.fact && e.fact.status === 'changed';
+const evStart = e => (isChanged(e) && e.fact.time) || e.time || '';
+const dayEvents = date => state.events.filter(e => e.date === date).sort((a, b) => evStart(a).localeCompare(evStart(b)));
+
+function evRow(e, del = false) {
+  const st = e.fact && e.fact.status;
+  // Пояснение — мелкой строкой под названием, чтобы на телефоне хватало места
+  let sub = '';
+  if (e.extra) sub = '<span class="sub">вне плана</span>';
+  else if (st === 'changed') sub = `<span class="sub">по плану было ${esc(span(e.time, e.end))}</span>`;
+  else if (st === 'skipped') sub = '<span class="sub late">не было</span>';
+  const shown = isChanged(e) ? span(e.fact.time, e.fact.end) : span(e.time, e.end);
+  return `
+  <div class="row ${st === 'skipped' ? 'done' : ''}">
+    <span class="time">${esc(shown)}</span><span class="dot"></span>
+    <span class="grow">${esc(e.title)}${sub}</span>${st === 'done' || e.extra ? '<span class="tag ok">✓</span>' : ''}
+    ${del ? `<button class="del" title="Удалить" data-act="delEvent" data-id="${e.id}">×</button>` : ''}
+  </div>`;
+}
+
 // Одна строка задачи — используется в «Обзоре» и в «Задачах»
 function taskRow(x) {
   return `
@@ -441,7 +487,7 @@ function viewCalendar() {
     const cls = [date === today() && 'today', date === ui.calDay && 'sel', busy.has(date) && 'has'].filter(Boolean).join(' ');
     cells += `<button class="day ${cls}" data-act="pickDay" data-id="${date}">${d}</button>`;
   }
-  const list = state.events.filter(e => e.date === ui.calDay).sort((a, b) => a.time.localeCompare(b.time));
+  const list = dayEvents(ui.calDay);
 
   return `
   <div class="head"><div><h1>Календарь</h1><div class="date">Нажмите на день, чтобы посмотреть или добавить дела</div></div></div>
@@ -457,14 +503,14 @@ function viewCalendar() {
     <div class="card">
       <h2>${cap(fmt(ui.calDay, { weekday: 'long', day: 'numeric', month: 'long' }))}</h2>
       <form class="add" data-form="event">
-        <input type="time" name="time">
+        <input type="time" name="time" title="Начало">
+        <input type="time" name="end" title="Конец (необязательно)">
         <input type="text" name="title" placeholder="Что запланировано?" required>
         <button class="btn small">Добавить</button>
       </form>
-      ${list.length ? list.map(e => `
-        <div class="row"><span class="time">${esc(e.time || '—')}</span><span class="dot"></span>
-        <span class="grow">${esc(e.title)}</span><button class="del" title="Удалить" data-act="delEvent" data-id="${e.id}">×</button></div>`).join('')
+      ${list.length ? list.map(e => evRow(e, true)).join('')
         : '<div class="empty">В этот день дел нет</div>'}
+      <div class="more"><button class="link" data-act="review" data-id="${ui.calDay}">Итог этого дня</button></div>
     </div>
   </div>`;
 }
@@ -705,7 +751,7 @@ function render() {
 }
 
 // Сохранить и перерисовать — вызывается после любого изменения
-function commit() { save(); render(); }
+function commit() { save(); render(); if (ui.modal === 'review') renderReview(); }
 const byId = (list, id) => state[list].find(x => x.id === id);
 const remove = (list, id) => { state[list] = state[list].filter(x => x.id !== id); };
 
@@ -728,17 +774,87 @@ function showBrief() {
     `Проектов в работе: ${state.projects.filter(p => p.status === 'В работе').length}.`,
     `Тренировок на этой неделе: ${wk}.`
   ];
-  document.getElementById('modal').innerHTML = `
+  openModal('brief', `
     <h3>Брифинг дня</h3><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>
-    <button class="btn" data-act="closeBrief">Понятно</button>`;
+    <button class="btn" data-act="closeModal">Понятно</button>`);
+}
+
+function openModal(kind, html) {
+  ui.modal = kind;
+  const m = document.getElementById('modal');
+  m.className = 'modal' + (kind === 'review' ? ' wide' : '');
+  m.innerHTML = html;
   document.getElementById('overlay').classList.add('show');
+}
+function closeModal() {
+  ui.modal = null;
+  document.getElementById('overlay').classList.remove('show');
+}
+
+
+// ---------- 6б. Итог дня ----------
+// Вечером отмечаем по каждому пункту плана, как было на самом деле.
+// План не стирается: рядом с ним хранится «факт» — это нужно для разбора в конце месяца.
+function showReview(date) {
+  ui.reviewDate = date || today();
+  openModal('review', '');
+  renderReview();
+}
+
+function renderReview() {
+  const d = ui.reviewDate;
+  const list = dayEvents(d);
+  const btn = (e, s, label, title) =>
+    `<button class="rv rv-${s} ${e.fact && e.fact.status === s ? 'on' : ''}" title="${title}" data-act="fact" data-id="${e.id}:${s}">${label}</button>`;
+
+  document.getElementById('modal').innerHTML = `
+    <h3 style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+      Итог дня <input type="date" value="${d}" data-chg="reviewDate">
+    </h3>
+    <div class="date" style="margin-bottom:8px">✓ — было как в плане · ✎ — в другое время · ✕ — не было</div>
+    ${list.map(e => `
+      <div class="rv-item">
+        <div class="row">
+          <span class="grow">${esc(e.title)}<span class="sub">${esc(span(e.time, e.end))}${e.extra ? ' · вне плана' : ''}</span></span>
+          ${e.extra
+            ? `<button class="del" title="Удалить" data-act="delEvent" data-id="${e.id}">×</button>`
+            : btn(e, 'done', '✓', 'Было как в плане') + btn(e, 'changed', '✎', 'Было в другое время') + btn(e, 'skipped', '✕', 'Не было')}
+        </div>
+        ${isChanged(e) ? `
+        <div class="fact-edit">
+          <span class="tag">На самом деле:</span>
+          <input type="time" value="${e.fact.time || ''}" data-chg="factTime" data-id="${e.id}"> –
+          <input type="time" value="${e.fact.end || ''}" data-chg="factEnd" data-id="${e.id}">
+        </div>` : ''}
+      </div>`).join('') || '<div class="empty">В плане на этот день ничего нет</div>'}
+
+    <h2 style="font-size:15px;margin:18px 0 8px">Было вне плана</h2>
+    <form class="add" data-form="extra">
+      <input type="time" name="time" required title="С">
+      <input type="time" name="end" title="До">
+      <input type="text" name="title" placeholder="Что делал" required>
+      <button class="btn small ghost">Добавить</button>
+    </form>
+
+    <h2 style="font-size:15px;margin:6px 0 0">Заметка о дне</h2>
+    <textarea data-chg="dayNote" placeholder="Можно надиктовать: нажмите микрофон на клавиатуре телефона">${esc((state.days[d] || {}).note || '')}</textarea>
+    <button class="btn" data-act="closeModal">Готово</button>`;
+}
+
+// Нажали ✓ / ✎ / ✕. Повторное нажатие той же кнопки снимает отметку.
+function setFact(id, status) {
+  const e = byId('events', id);
+  if (e.fact && e.fact.status === status) delete e.fact;
+  else if (status === 'changed') e.fact = { status, time: e.time || '', end: e.end || '' };
+  else e.fact = { status };
+  commit();
 }
 
 
 // ---------- 7. Реакция на действия пользователя ----------
 // Нажатия: у каждой кнопки есть data-act (что сделать) и data-id (с чем)
 document.addEventListener('click', e => {
-  if (e.target.id === 'overlay') return document.getElementById('overlay').classList.remove('show');
+  if (e.target.id === 'overlay') return closeModal();
   const el = e.target.closest('[data-act]');
   if (!el) return;
   const id = el.dataset.id;
@@ -752,7 +868,9 @@ document.addEventListener('click', e => {
     case 'brief': return showBrief();
     case 'export': return exportData();
     case 'import': return document.getElementById('importFile').click();
-    case 'closeBrief': return document.getElementById('overlay').classList.remove('show');
+    case 'closeModal': return closeModal();
+    case 'review': return showReview(id);
+    case 'fact': { const [eid, st] = id.split(':'); return setFact(eid, st); }
     case 'star': { const x = byId('tasks', id); x.important = !x.important; return commit(); }
     case 'filter': ui.taskFilter = id; return render();
     case 'goalTab': ui.goalTab = id; return render();
@@ -797,6 +915,10 @@ document.addEventListener('change', e => {
     case 'hobbyStatus': byId('hobbyProjects', id).status = el.value; return save();
     case 'hobbyNotes': state.hobbyNotes = el.value; return save();
     case 'goalCurrent': byId('goals', id).current = +el.value || 0; return commit();
+    case 'reviewDate': if (el.value) { ui.reviewDate = el.value; renderReview(); } return;
+    case 'factTime': byId('events', id).fact.time = el.value; save(); return render();
+    case 'factEnd': byId('events', id).fact.end = el.value; save(); return render();
+    case 'dayNote': (state.days[ui.reviewDate] ??= {}).note = el.value; return save();
     case 'toggleStep': {
       const [gid, sid] = id.split(':');
       byId('goals', gid).steps.find(s => s.id === sid).done = el.checked;
@@ -815,7 +937,8 @@ document.addEventListener('submit', e => {
   const f = e.target, v = Object.fromEntries(new FormData(f));
   const title = (v.title || '').trim();
   switch (f.dataset.form) {
-    case 'event': state.events.push({ id: uid(), date: ui.calDay, time: v.time, title }); break;
+    case 'event': state.events.push({ id: uid(), date: ui.calDay, time: v.time, end: v.end || '', title }); break;
+    case 'extra': state.events.push({ id: uid(), date: ui.reviewDate, time: v.time, end: v.end || '', title, extra: true, fact: { status: 'done' } }); break;
     case 'task': state.tasks.push({ id: uid(), title, due: v.due || '', important: !!v.important, done: false }); break;
     case 'project': state.projects.push({ id: uid(), name: v.name.trim(), status: 'В работе', progress: 0, deadline: v.deadline || '', note: '' }); break;
     case 'learn': state.learn.push({ id: uid(), title, done: false }); break;
@@ -828,7 +951,7 @@ document.addEventListener('submit', e => {
 });
 
 // Esc закрывает окно брифинга
-document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('overlay').classList.remove('show'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 // Включаем работу без интернета (только когда открыто с сайта, а не из файла)
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
