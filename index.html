@@ -205,8 +205,8 @@
     <!-- Резервная копия: скачать данные в файл / вернуть их из файла -->
     <div class="side-bottom">
       <div class="side-caption">Резервная копия</div>
-      <button class="nav-btn small" data-act="export">⭳ Сохранить копию</button>
-      <button class="nav-btn small" data-act="import">⭱ Загрузить из копии</button>
+      <button class="nav-btn small" data-act="export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Сохранить копию</button>
+      <button class="nav-btn small" data-act="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Загрузить из копии</button>
       <input type="file" id="importFile" accept=".json,application/json" hidden>
     </div>
   </nav>
@@ -335,15 +335,41 @@ function importData(file) {
   const reader = new FileReader();
   reader.onload = () => {
     let data;
-    try { data = JSON.parse(reader.result); } catch (e) { return alert('Это не файл копии дашборда.'); }
-    if (!data || !Array.isArray(data.tasks) || !Array.isArray(data.events)) return alert('Это не файл копии дашборда.');
-    if (!confirm(`Загрузить копию «${file.name}»? Текущие данные будут заменены.`)) return;
-    for (const k of Object.keys(EMPTY)) state[k] = data[k] ?? structuredClone(EMPTY[k]);
-    fixGoals();
-    commit();
-    alert('Данные восстановлены из копии.');
+    try { data = JSON.parse(reader.result); } catch (e) { data = null; }
+    if (!data || !Array.isArray(data.tasks) || !Array.isArray(data.events))
+      return notify(`Файл «${esc(file.name)}» — не копия дашборда. Выберите другой файл.`);
+    // Сначала показываем, что лежит в файле, — так сразу видно, тот ли файл выбран
+    const n = k => (data[k] || []).length;
+    const total = n('events') + n('tasks') + n('goals') + n('projects') + n('learn') + n('hobbyProjects') + n('workouts');
+    confirmThen(`
+      <b>Загрузить «${esc(file.name)}»?</b><br><br>
+      В файле: пунктов календаря — ${n('events')}, задач — ${n('tasks')}, целей — ${n('goals')},
+      проектов — ${n('projects')}, тренировок — ${n('workouts')}.
+      ${total ? '' : '<br><br><b style="color:var(--red)">Файл пустой — скорее всего, выбран не тот.</b>'}
+      <br><br>Текущие данные будут заменены.`,
+      () => {
+        for (const k of Object.keys(EMPTY)) state[k] = data[k] ?? structuredClone(EMPTY[k]);
+        fixGoals();
+        commit();
+        notify('Готово: данные загружены.');
+      }, 'Загрузить');
   };
   reader.readAsText(file);
+}
+
+// ---------- Окна подтверждения и сообщений (вместо системных) ----------
+let onConfirm = null;
+function confirmThen(html, onYes, yesLabel = 'Да') {
+  onConfirm = onYes;
+  openModal('confirm', `
+    <p style="margin:0 0 20px;line-height:1.5">${html}</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn ghost" data-act="closeModal">Отмена</button>
+      <button class="btn" data-act="confirmYes">${yesLabel}</button>
+    </div>`);
+}
+function notify(html) {
+  openModal('info', `<p style="margin:0 0 20px;line-height:1.5">${html}</p><button class="btn" data-act="closeModal">Понятно</button>`);
 }
 
 
@@ -817,7 +843,7 @@ function renderReview() {
         <div class="row">
           <span class="grow">${esc(e.title)}<span class="sub">${esc(span(e.time, e.end))}${e.extra ? ' · вне плана' : ''}</span></span>
           ${e.extra
-            ? `<button class="del" title="Удалить" data-act="delEvent" data-id="${e.id}">×</button>`
+            ? `<button class="del" title="Удалить" data-act="delExtra" data-id="${e.id}">×</button>`
             : btn(e, 'done', '✓', 'Было как в плане') + btn(e, 'changed', '✎', 'Было в другое время') + btn(e, 'skipped', '✕', 'Не было')}
         </div>
         ${isChanged(e) ? `
@@ -878,7 +904,7 @@ document.addEventListener('click', e => {
     case 'delStep': {
       const [gid, sid] = id.split(':');
       const g = byId('goals', gid);
-      return ask() && (g.steps = g.steps.filter(s => s.id !== sid), commit());
+      return confirmThen('Удалить шаг?', () => { g.steps = g.steps.filter(s => s.id !== sid); commit(); }, 'Удалить');
     }
     case 'pickDay': ui.calDay = id; return render();
     case 'month': {
@@ -886,17 +912,20 @@ document.addEventListener('click', e => {
       ui.calMonth = ymd(new Date(y, m - 1 + Number(id), 1)).slice(0, 7);
       return render();
     }
+    case 'confirmYes': { const fn = onConfirm; onConfirm = null; closeModal(); return fn && fn(); }
+    // Пункт «вне плана» в «Итоге дня» удаляем сразу, без вопроса
+    case 'delExtra': remove('events', id); return commit();
     // Удаление — с подтверждением
-    case 'delEvent': return ask() && (remove('events', id), commit());
-    case 'delTask': return ask() && (remove('tasks', id), commit());
-    case 'delProject': return ask('Удалить проект вместе с заметками?') && (remove('projects', id), commit());
-    case 'delLearn': return ask() && (remove('learn', id), commit());
-    case 'delHobby': return ask() && (remove('hobbyProjects', id), commit());
-    case 'delGoal': return ask('Удалить цель вместе со всеми шагами?') && (remove('goals', id), commit());
-    case 'delWorkout': return ask() && (remove('workouts', id), commit());
+    case 'delEvent': return ask('Удалить пункт календаря?', 'events', id);
+    case 'delTask': return ask('Удалить задачу?', 'tasks', id);
+    case 'delProject': return ask('Удалить проект вместе с заметками?', 'projects', id);
+    case 'delLearn': return ask('Удалить тему?', 'learn', id);
+    case 'delHobby': return ask('Удалить проект?', 'hobbyProjects', id);
+    case 'delGoal': return ask('Удалить цель вместе со всеми шагами?', 'goals', id);
+    case 'delWorkout': return ask('Удалить тренировку?', 'workouts', id);
   }
 });
-const ask = (q = 'Удалить?') => confirm(q);
+const ask = (q, list, id) => confirmThen(q, () => { remove(list, id); commit(); }, 'Удалить');
 
 // Изменения полей: галочки, выпадающие списки, ползунки, заметки
 document.addEventListener('change', e => {
