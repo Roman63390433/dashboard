@@ -64,7 +64,20 @@
   }
   .nav-btn:hover { color: var(--text); }
   .nav-btn.active { background: var(--accent); color: var(--on-accent); font-weight: 600; }
-  .side-bottom { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
+  /* Меню «Копия» в правом верхнем углу: кнопка и выпадающий список */
+  .menu-wrap { margin-left: auto; position: relative; flex-shrink: 0; }
+  .menu {
+    position: absolute; right: 0; top: calc(100% + 8px); min-width: 230px; display: none;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .45);
+  }
+  .menu.show { display: block; }
+  .menu button {
+    display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; color: var(--text);
+    font: inherit; padding: 10px 12px; border-radius: 9px; cursor: pointer; text-align: left;
+  }
+  .menu button:hover { background: var(--card2); }
+  .menu svg { width: 17px; height: 17px; color: var(--muted); flex-shrink: 0; }
   .icon-btn {
     display: flex; align-items: center; gap: 7px; background: var(--card); border: 1px solid var(--line); color: var(--muted);
     border-radius: 999px; padding: 8px 13px; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
@@ -192,6 +205,51 @@
   .goal-edit { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
   .goal-edit input { width: 90px; }
 
+  /* --- Стрелочка «раскрыть/свернуть» (шаги цели, подшаги в календаре) --- */
+  .chev {
+    display: inline-flex; align-items: center; gap: 6px; background: var(--card2); border: 0; color: var(--muted);
+    border-radius: 999px; padding: 6px 10px; font: inherit; font-size: 12.5px; cursor: pointer; flex-shrink: 0;
+  }
+  .chev:hover { color: var(--text); }
+  .chev svg { width: 15px; height: 15px; transition: transform .2s; }
+  .chev.open svg { transform: rotate(180deg); }
+  .goal-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+  /* Название шага — нажимается, открывает окно шага */
+  .open-step { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .open-step:hover { color: var(--accent); }
+  /* Подшаги под пунктом календаря */
+  .ev { flex-wrap: wrap; }
+  .ev-subs { flex-basis: 100%; padding-top: 4px; }
+  .ev-subs .row { padding: 7px 0; border-color: var(--line); }
+
+  /* --- Окно шага: видео, почитать, задания --- */
+  .kind { font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  .kind.video { color: var(--red); border-color: #4a2723; }
+  .kind.read { color: var(--blue); border-color: #22324a; }
+  .kind.task { color: var(--hobby); border-color: #3a2e52; }
+  .item a { color: var(--text); text-decoration: underline; text-decoration-color: #4a5058; text-underline-offset: 3px; }
+  .item a:hover { text-decoration-color: var(--accent); }
+  .sec-title { font-size: 12.5px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 600; margin: 18px 0 2px; }
+
+  /* --- Круглая кнопка «+» (добавить задачу / проект) --- */
+  .plus {
+    width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent);
+    font-size: 26px; line-height: 1; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .plus:hover { filter: brightness(1.08); }
+  .head .plus { margin-left: auto; }
+  .head:has(.plus) { flex-wrap: nowrap; }   /* «+» всегда справа от заголовка, даже на телефоне */
+  .modal form.add { margin: 0; }
+  .modal form.add input[type=text] { flex-basis: 100%; }
+
+  /* --- Обзор: «Шаги в этом месяце» на всю ширину под «Целями на год» --- */
+  .ov { grid-template-areas: "today sport tasks" "proj year year" "steps steps steps"; }
+  .ov > .a-today { grid-area: today; } .ov > .a-sport { grid-area: sport; } .ov > .a-tasks { grid-area: tasks; }
+  .ov > .a-proj { grid-area: proj; } .ov > .a-year { grid-area: year; } .ov > .a-steps { grid-area: steps; }
+  .ring.click { cursor: pointer; border-radius: 12px; }
+  .ring.click:hover .lbl { color: var(--text); }
+  .ring .num.late { color: var(--red); }
+
   /* --- Всплывающие окна --- */
   .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .6); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
   .overlay.show { display: flex; }
@@ -217,14 +275,17 @@
   /* --- Средний экран: карточки обзора в две колонки --- */
   @media (max-width: 1100px) {
     .grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ov { grid-template-areas: "today sport" "tasks proj" "year year" "steps steps"; }
   }
   /* --- Телефон и узкое окно: меню во второй строке, карточки в одну колонку --- */
   @media (max-width: 860px) {
-    .topbar { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
+    .topbar { padding: 10px 12px; gap: 8px; }
     .logo { display: none; }
-    .side-bottom { margin-left: 0; width: 100%; }
-    .icon-btn { flex: 1; justify-content: center; padding: 7px 8px; font-size: 12.5px; }
-    .nav { width: 100%; }
+    .nav { flex: 1 1 auto; }
+    .icon-btn { padding: 9px 11px; }
+    .icon-btn .txt { display: none; }      /* на телефоне у кнопки «Копия» только значок */
+    .ov { grid-template-areas: none; }
+    .ov > * { grid-area: auto !important; }
     .kpi { padding: 14px; }
     .kpi b { font-size: 26px; }
     .kpi span { white-space: normal; font-size: 12px; line-height: 1.3; min-height: 2.6em; }
@@ -251,10 +312,13 @@
   <header class="topbar" id="sidebar">
     <span class="logo" title="Мой дашборд"></span>
     <nav class="nav" id="nav"></nav>
-    <!-- Резервная копия: скачать данные в файл / вернуть их из файла -->
-    <div class="side-bottom">
-      <button class="icon-btn" data-act="export" title="Скачать все данные в файл"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Сохранить копию</button>
-      <button class="icon-btn" data-act="import" title="Вернуть данные из файла копии"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Загрузить из копии</button>
+    <!-- Резервная копия: одна кнопка, по нажатию — список «Сохранить / Загрузить» -->
+    <div class="menu-wrap">
+      <button class="icon-btn" data-act="menu" title="Резервная копия" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="txt">Копия</span></button>
+      <div class="menu" id="menu">
+        <button data-act="export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Сохранить копию</button>
+        <button data-act="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Загрузить из копии</button>
+      </div>
       <!-- Без фильтра по типу: Android иногда прячет .json, скачанные из мессенджеров -->
       <input type="file" id="importFile" hidden>
     </div>
@@ -284,9 +348,12 @@ const EMPTY = {
   learn: [],         // хобби — что изучаю: { id, title, done }
   hobbyProjects: [], // хобби — мои проекты: { id, title, status }
   hobbyNotes: '',
-  goals: [],         // цели: { id, cat, title, deadline, current, target, unit, steps: [{ id, title, due, done }] }
+  goals: [],         // цели: { id, cat, title, deadline, current, target, unit, steps: [{ id, title, due, done, items }] }
                      //   cat — раздел: year (на год), sport, hobby, work
-  workouts: []       // спорт — тренировки: { id, date, type, minutes }
+                     //   items — подшаги шага: { id, kind: video | read | task, title, url, note, date, done }
+                     //   подшаг с датой виден в календаре под «Хобби» этого дня
+  workouts: [],      // спорт — тренировки: { id, date, type, minutes }
+  seed: 0            // какая версия готовых подшагов уже добавлена (см. SEED ниже)
 };
 
 function load() {
@@ -303,11 +370,112 @@ function fixGoals() {
   for (const g of state.goals) {
     g.cat ??= 'sport'; g.steps ??= []; g.deadline ??= ''; g.unit ??= '';
     g.current ??= 0; g.target ??= 0;
+    for (const s of g.steps) s.items ??= [];
   }
 }
 
+// ----- Готовые подшаги для цели «Основы: как устроены сайты…» -----
+// Добавляются в шаги один раз (state.seed запоминает это). Если подшаги у шага уже есть — не трогаем.
+// Формат строки: [вид, дата, название, ссылка, пояснение]. Вид: video — видео, read — почитать, task — задание.
+const YT = id => 'https://www.youtube.com/watch?v=' + id;
+const MDN = p => 'https://developer.mozilla.org/ru/docs/Learn/Getting_started_with_the_web/' + p;
+const GITBOOK = p => 'https://git-scm.com/book/ru/v2/' + p;
+const SEED_V = 1;
+const SEED_GOAL = 'Основы: как устроены сайты, Git, работа с Claude Code';
+const SEED = {
+  'Разобрать устройство дашборда: HTML, CSS, JS — что за что отвечает': [
+    ['video', '2026-10-26', '«Что такое HTML / CSS / JS» — канал «Хочу вАйти»', YT('6v9xq7KlsB8'), 'Коротко: каркас страницы, оформление и поведение'],
+    ['task', '2026-10-26', 'Поставить редактор VS Code и открыть в нём index.html дашборда', 'https://code.visualstudio.com/', 'Блокнот тоже подойдёт, но в VS Code код подсвечен цветом — читать легче'],
+    ['read', '2026-10-31', 'MDN: основы HTML', MDN('HTML_basics')],
+    ['read', '2026-10-31', 'MDN: основы CSS', MDN('CSS_basics')],
+    ['task', '2026-10-31', 'Найти в index.html три части: <style>, разметку и <script>', '', 'Записать в «Заметки по учёбе», с какой строки начинается каждая и за что отвечает'],
+    ['read', '2026-11-01', 'MDN: основы JavaScript', MDN('JavaScript_basics')],
+    ['task', '2026-11-01', 'Правый клик по кнопке «Брифинг дня» → «Просмотреть код»', '', 'Найти её HTML и стиль .btn. Поменять цвет прямо в панели браузера — файл от этого не испортится'],
+    ['task', '2026-11-01', 'Разобрать с Claude: как нажатие на кнопку доходит до кода', '', 'Напиши: «Шаг 1 — объясни, как работает кнопка Брифинг дня». Потом перескажи своими словами']
+  ],
+  'Самому поменять что-то в дашборде (цвет, текст) и выложить на GitHub': [
+    ['task', '2026-11-02', 'Поменять акцентный цвет --accent на свой и посмотреть результат', '', 'Сначала сделай копию index.html. Цвета — в начале <style>, в блоке :root'],
+    ['read', '2026-11-02', 'Дока: переменные в CSS (--имя)', 'https://doka.guide/css/custom-properties/'],
+    ['video', '2026-11-04', '«Git — простым языком на понятном примере» — Артём Шумейко', YT('cG-8NnH4x94')],
+    ['task', '2026-11-04', 'Зарегистрироваться на GitHub', 'https://github.com/', 'Регистрацию делаешь сам; пароль никому не пересылай'],
+    ['read', '2026-11-04', 'GitHub: «Привет, мир» — первый репозиторий', 'https://docs.github.com/ru/get-started/start-your-journey/hello-world'],
+    ['task', '2026-11-05', 'Установить Git для Windows', 'https://git-scm.com/downloads/win', 'Проверка: в терминале набрать git --version — появится номер версии'],
+    ['video', '2026-11-07', '«Изучение Git для новичков #5 — введение в GitHub» — Гоша Дударь', YT('HHhaoUAe1K8')],
+    ['task', '2026-11-07', 'Вместе с Claude: создать репозиторий для дашборда и загрузить файлы', '', 'Напиши: «Шаг 2 — настраиваем Git и GitHub для дашборда». Команды набираешь сам, я объясняю каждую'],
+    ['task', '2026-11-08', 'Поменять текст в дашборде и загрузить изменение на GitHub', '', 'Найди своё изменение на сайте GitHub во вкладке Commits']
+  ],
+  'Git: коммит, история, откат — попробовать на дашборде': [
+    ['read', '2026-11-09', 'Книга Pro Git: о системе контроля версий', GITBOOK('Введение-О-системе-контроля-версий')],
+    ['video', '2026-11-09', '«Урок Git для новичков, быстрый старт на практике» — Павел Букреев', YT('uvGOHmAxTEQ')],
+    ['read', '2026-11-14', 'Pro Git: запись изменений в репозиторий', GITBOOK('Основы-Git-Запись-изменений-в-репозиторий')],
+    ['task', '2026-11-14', 'Сделать 3 коммита с понятными сообщениями и посмотреть git log', '', 'Сообщение — что изменилось, например «Цвет акцента: синий»'],
+    ['read', '2026-11-15', 'Pro Git: операции отмены', GITBOOK('Основы-Git-Операции-отмены')],
+    ['task', '2026-11-15', 'Специально «сломать» дашборд, закоммитить и откатить', '', 'Удали строку, сохрани, сделай коммит — и верни всё через git revert'],
+    ['task', '2026-11-15', 'Разобрать с Claude: чем revert отличается от reset', '', 'Напиши: «Шаг 3 — объясни revert и reset на моём дашборде»']
+  ],
+  'Основы JavaScript: переменные, функции, события — на примерах из дашборда': [
+    ['video', '2026-11-16', '«Как работает JavaScript. Переменные» — урок 1, Максим Лескин', YT('8CAgTVvpcqw')],
+    ['read', '2026-11-16', 'learn.javascript.ru: переменные', 'https://learn.javascript.ru/variables'],
+    ['read', '2026-11-19', 'learn.javascript.ru: функции', 'https://learn.javascript.ru/function-basics'],
+    ['task', '2026-11-19', 'Найти функцию greeting() и поменять одно приветствие', '', 'Ctrl+F в редакторе. Посмотри, как по часам выбирается приветствие'],
+    ['video', '2026-11-21', '«DOM и события в JavaScript» — урок 7, Максим Лескин', YT('3j5pJBinqJE')],
+    ['read', '2026-11-21', 'learn.javascript.ru: браузерные события', 'https://learn.javascript.ru/introduction-browser-events'],
+    ['task', '2026-11-22', 'Пройти цепочку: data-act="brief" → showBrief()', '', 'Рассказать Claude своими словами, что происходит от нажатия до окна'],
+    ['task', '2026-11-22', 'Добавить в брифинг свою строку — например, сколько дней до сессии', '', 'Пишешь сам, Claude подсказывает. Напиши: «Шаг 4 — добавляю строку в брифинг»']
+  ],
+  'Как хранятся данные: localStorage, JSON, резервная копия': [
+    ['video', '2026-11-23', '«JSON формат и localStorage в JavaScript — разбор» — Александр Дудукало', YT('aCWAYWyymwA')],
+    ['read', '2026-11-23', 'learn.javascript.ru: формат JSON', 'https://learn.javascript.ru/json'],
+    ['read', '2026-11-28', 'learn.javascript.ru: localStorage', 'https://learn.javascript.ru/localstorage'],
+    ['read', '2026-11-28', 'Chrome: как смотреть Local Storage', 'https://developer.chrome.com/docs/devtools/storage/localstorage?hl=ru'],
+    ['task', '2026-11-28', 'Найти свои данные: F12 → Application → Local Storage → my-dashboard-v1', '', 'На компьютере, в Chrome или Edge'],
+    ['task', '2026-11-29', 'Сохранить копию, открыть .json в VS Code и найти в нём эту цель', ''],
+    ['task', '2026-11-29', 'Разобрать с Claude: что будет с данными, если очистить браузер', '', 'И почему копию стоит сохранять раз в месяц. Напиши: «Шаг 5 — где живут мои данные»']
+  ],
+  'Claude Code: как ставить задачу и проверять результат — свой чек-лист': [
+    ['video', '2026-11-30', '«Claude Code с нуля, урок 1 — что это и как пользоваться» — Гоша Дударь', YT('1PYyVEhd6W4')],
+    ['read', '2026-11-30', 'Документация Claude Code: обзор', 'https://code.claude.com/docs/ru/overview'],
+    ['read', '2026-12-03', 'Claude Code: лучшие практики', 'https://code.claude.com/docs/ru/best-practices'],
+    ['read', '2026-12-05', 'Claude Code: типовые сценарии работы', 'https://code.claude.com/docs/ru/common-workflows'],
+    ['task', '2026-12-05', 'Выписать 5 правил постановки задачи, которые пригодятся тебе', ''],
+    ['task', '2026-12-06', 'Составить свой чек-лист: как ставлю задачу и как проверяю результат', '', 'Что сделать, где, как пойму, что готово. Положим его в CLAUDE.md проекта'],
+    ['task', '2026-12-06', 'Поставить Claude маленькую задачу по чек-листу и проверить результат', '', 'Например: «добавь в Спорт счётчик недель без пропуска»']
+  ],
+  'Ошибки: консоль браузера, как найти и описать баг': [
+    ['video', '2026-12-07', '«Chrome DevTools — самое необходимое для новичков» — Михаил Непомнящий', YT('bqF4fcZOSEs')],
+    ['read', '2026-12-07', 'Chrome: обзор консоли', 'https://developer.chrome.com/docs/devtools/console?hl=ru'],
+    ['read', '2026-12-12', 'learn.javascript.ru: отладка в браузере', 'https://learn.javascript.ru/debugging-chrome'],
+    ['video', '2026-12-12', '«Отладка JavaScript в Chrome DevTools для новичков» — FrontCoder', YT('q9CSm2WXXlc')],
+    ['read', '2026-12-13', 'Дока: ошибки в JavaScript', 'https://doka.guide/js/errors/'],
+    ['task', '2026-12-13', 'Найти ошибку, которую Claude спрячет в копии дашборда', '', 'Напиши: «Шаг 7 — сломай копию». Ищешь по консоли (F12)'],
+    ['task', '2026-12-13', 'Описать баг по шаблону: что делал → что ждал → что получил', '', 'Этот же шаблон пригодится для задач Claude']
+  ],
+  'Итог: маленькая страница от идеи до GitHub Pages': [
+    ['task', '2026-12-14', 'Придумать маленькую страницу и набросать её на бумаге', '', 'Например, визитка инженера ПТО или «Мои тренировки»'],
+    ['read', '2026-12-14', 'GitHub Pages: быстрый старт', 'https://docs.github.com/ru/pages/quickstart'],
+    ['video', '2026-12-17', '«Git урок 8: публикуем сайт на GitHub Pages» — «Войти в IT»', YT('yDh1z4hTpv0')],
+    ['task', '2026-12-17', 'Записать задачу для страницы по своему чек-листу', ''],
+    ['task', '2026-12-19', 'Сделать страницу вместе с Claude: HTML и CSS', '', 'Напиши: «Шаг 8 — делаем страницу» и приложи задачу'],
+    ['task', '2026-12-20', 'Выложить страницу на GitHub Pages и открыть с телефона', ''],
+    ['task', '2026-12-21', 'Разобрать с Claude, что получилось, и записать итоги в «Заметки по учёбе»', '', 'Перед сессией: что понял, что осталось непонятным']
+  ]
+};
+function seedSteps() {
+  if ((state.seed || 0) >= SEED_V) return;
+  const g = state.goals.find(x => x.title === SEED_GOAL);
+  if (!g) return;                            // такой цели нет — добавлять некуда
+  for (const s of g.steps) {
+    const rows = SEED[s.title];
+    if (rows && !s.items.length)
+      s.items = rows.map(([kind, date, title, url = '', note = '']) => ({ id: uid(), kind, date, title, url, note, done: false }));
+  }
+  state.seed = SEED_V;
+  save();
+}
+
 // Что сейчас открыто на экране (это не сохраняем)
-const ui = { view: 'overview', taskFilter: 'active', calMonth: null, calDay: null, goalTab: 'year', modal: null, reviewDate: null };
+const ui = { view: 'overview', taskFilter: 'active', calMonth: null, calDay: null, goalTab: 'year', modal: null, reviewDate: null,
+  openGoals: new Set(), openEvents: new Set(), stepRef: null };
 
 
 // ---------- 2. Мелкие помощники ----------
@@ -399,6 +567,7 @@ function importData(file) {
       () => {
         for (const k of Object.keys(EMPTY)) state[k] = data[k] ?? structuredClone(EMPTY[k]);
         fixGoals();
+        seedSteps();
         commit();
         notify('Готово: данные загружены.');
       }, 'Загрузить');
@@ -470,21 +639,15 @@ function viewOverview() {
       : kpi(state.projects.filter(p => p.status === 'В работе').length, 'проектов в работе', 0)}
   </div>
 
-  <div class="grid three">
-    <div class="card">
+  <div class="grid three ov">
+    <div class="card a-today">
       <h2>Сегодня</h2>
       ${todayEvents.length ? todayEvents.map(e => evRow(e)).join('')
         : '<div class="empty">На сегодня ничего не запланировано</div>'}
       <div class="more"><button class="link" data-act="go" data-id="calendar">Открыть календарь</button></div>
     </div>
 
-    <div class="card">
-      <h2>Шаги в этом месяце <span class="tag">${monthSteps.length}</span></h2>
-      ${monthSteps.slice(0, 8).map(([g, s]) => stepRow(g, s, true)).join('') || '<div class="empty">В этом месяце шагов нет</div>'}
-      ${monthSteps.length > 8 ? `<div class="more"><button class="link" data-act="go" data-id="goals">Ещё ${monthSteps.length - 8} — все цели</button></div>` : ''}
-    </div>
-
-    <div class="card">
+    <div class="card a-sport">
       <h2>Спорт в этом месяце</h2>
       <div class="big">${monthWorkouts.length}<small> ${plannedWorkouts ? `из ${plannedWorkouts} ` : ''}трениров${plannedWorkouts ? plural(plannedWorkouts, 'ки', 'ок', 'ок') : plural(monthWorkouts.length, 'ка', 'ки', 'ок')} · ${minutes} мин</small></div>
       <div class="rings">${sportGoals.slice(0, 4).map((g, i) =>
@@ -492,13 +655,13 @@ function viewOverview() {
       <div class="more"><button class="link" data-act="go" data-id="sport">Открыть «Спорт»</button></div>
     </div>
 
-    <div class="card">
+    <div class="card a-tasks">
       <h2>Задачи</h2>
       ${tasks.length ? tasks.map(taskRow).join('') : '<div class="empty">Задач со сроком и главных задач нет</div>'}
       <div class="more"><button class="link" data-act="go" data-id="tasks">Все задачи</button></div>
     </div>
 
-    <div class="card">
+    <div class="card a-proj">
       <h2>Проекты</h2>
       ${projects.length ? projects.map(p => `
         <div class="meta" style="color:var(--text)"><span>${esc(p.name)}</span><span class="tag">${p.status === 'На паузе' ? 'пауза' : p.progress + '%'}${p.deadline ? ' · ' + fmt(p.deadline, { day: 'numeric', month: 'short' }) : ''}</span></div>
@@ -507,27 +670,38 @@ function viewOverview() {
       <div class="more"><button class="link" data-act="go" data-id="projects">Все проекты</button></div>
     </div>
 
-    <div class="card">
+    <div class="card a-year">
       <h2>Цели на год</h2>
       <div class="rings">${yearGoals.map((g, i) => ring(goalPct(g), RING_YEAR[i % RING_YEAR.length], esc(g.title))).join('')
         || '<div class="empty">Целей на год пока нет</div>'}</div>
       <div class="more"><button class="link" data-act="go" data-id="goals">Все цели</button></div>
     </div>
+
+    <div class="card a-steps">
+      <h2>Шаги в этом месяце <span class="tag">${monthSteps.length}</span></h2>
+      <div class="rings">${monthSteps.map(([g, s]) => ring(stepPct(s), CAT_COLOR[g.cat] || CAT_COLOR.year, esc(s.title),
+          s.due < t ? '<span class="num late">просрочен</span>' : 'до ' + fmt(s.due, { day: 'numeric', month: 'short' }), `${g.id}:${s.id}`)).join('')
+        || '<div class="empty">В этом месяце шагов нет</div>'}</div>
+      <div class="more"><button class="link" data-act="go" data-id="goals">Все цели</button></div>
+    </div>
   </div>`;
 }
 
-// Кольцо прогресса: процент внутри, подпись снизу (длинная обрезается до 2 строк), под ней цифры
+// Кольцо прогресса: процент внутри, подпись снизу (длинная обрезается до 2 строк), под ней цифры.
+// step — «цель:шаг»: тогда кольцо нажимается и открывает окно шага
 const RING_SPORT = ['#b6f36a', '#6aa8ff', '#f5b54a', '#b593ff'];
 const RING_YEAR = ['#b6f36a', '#6aa8ff', '#b593ff', '#f5b54a'];
-function ring(p, color, label, num = '') {
+const CAT_COLOR = { year: '#6aa8ff', sport: '#b6f36a', hobby: '#b593ff', work: '#f5b54a' };
+function ring(p, color, label, num = '', step = '') {
   const r = 30, L = 2 * Math.PI * r, part = Math.max(0, Math.min(p, 100)) / 100;
-  return `<div class="ring" title="${label}">
+  const click = step ? ` click" role="button" tabindex="0" data-act="openStep" data-id="${step}` : '';
+  return `<div class="ring${click}" title="${label}">
     <svg width="76" height="76" viewBox="0 0 76 76">
       <circle cx="38" cy="38" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="9"/>
       <circle cx="38" cy="38" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round"
         stroke-dasharray="${L * part} ${L}" transform="rotate(-90 38 38)"/>
       <text x="38" y="43" text-anchor="middle" font-size="15" font-weight="800" font-family="Manrope, Inter, sans-serif" fill="#e9ebee">${Math.round(part * 100)}%</text>
-    </svg><span class="lbl">${label}</span>${num ? `<span class="num">${num}</span>` : ''}</div>`;
+    </svg><span class="lbl">${label}</span>${num ? (num.startsWith('<') ? num : `<span class="num">${num}</span>`) : ''}</div>`;
 }
 
 // ----- Пункты календаря: план и факт -----
@@ -554,11 +728,45 @@ function evRow(e, del = false) {
   else if (st === 'changed') sub = `<span class="sub">по плану было ${esc(span(e.time, e.end))}</span>`;
   else if (st === 'skipped') sub = '<span class="sub late">не было</span>';
   const shown = isChanged(e) ? span(e.fact.time, e.fact.end) : span(e.time, e.end);
+  // У «Хобби» — подшаги этого дня из шагов целей, под стрелочкой
+  const subs = /^Хобби/.test(e.title) ? itemsOn(e.date) : [];
+  const open = ui.openEvents.has(e.id);
   return `
   <div class="ev ${st === 'skipped' ? 'done' : ''}" style="--c:${evColor(e.title)}">
     <span class="time">${esc(shown)}</span>
     <span class="grow">${esc(e.title)}${sub}</span>${st === 'done' || e.extra ? '<span class="tag ok">✓</span>' : ''}
+    ${subs.length ? `<button class="chev ${open ? 'open' : ''}" title="Подшаги на этот день" data-act="toggleEvent" data-id="${e.id}">${subs.filter(([, , i]) => i.done).length}/${subs.length}${CHEV}</button>` : ''}
     ${del ? `<button class="del" title="Удалить" data-act="delEvent" data-id="${e.id}">×</button>` : ''}
+    ${subs.length && open ? `<div class="ev-subs">${subs.map(([g, s, i]) => itemRow(g, s, i, true)).join('')}</div>` : ''}
+  </div>`;
+}
+
+// ----- Подшаги (материалы и задания шага) -----
+const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+const KIND = { video: 'Видео', read: 'Почитать', task: 'Задание' };
+// Все подшаги на дату: [цель, шаг, подшаг]
+function itemsOn(date) {
+  const out = [];
+  for (const g of state.goals) for (const s of g.steps) for (const i of s.items) if (i.date === date) out.push([g, s, i]);
+  return out;
+}
+// Прогресс шага: выполнен — 100%, иначе доля выполненных подшагов
+const stepPct = s => s.done ? 100 : pct(s.items.filter(i => i.done).length, s.items.length);
+
+// Строка подшага. inCal — в календаре: показываем, к какому шагу относится (нажатие открывает шаг)
+function itemRow(g, s, i, inCal = false) {
+  const ref = `${g.id}:${s.id}:${i.id}`;
+  const name = i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener">${esc(i.title)}</a>` : esc(i.title);
+  return `
+  <div class="row item ${i.done ? 'done' : ''}">
+    <input type="checkbox" ${i.done ? 'checked' : ''} data-chg="toggleItem" data-id="${ref}">
+    <span class="grow">${name}
+      ${i.note && !inCal ? `<span class="sub">${esc(i.note)}</span>` : ''}
+      ${inCal ? `<button class="open-step sub ell" data-act="openStep" data-id="${g.id}:${s.id}" title="Открыть шаг">${esc(s.title)}</button>` : ''}
+    </span>
+    ${inCal ? `<span class="kind ${i.kind}">${KIND[i.kind]}</span>`
+      : `${i.date ? `<span class="tag">${fmt(i.date, { day: 'numeric', month: 'short' })}</span>` : ''}
+         <button class="del" title="Удалить" data-act="delItem" data-id="${ref}">×</button>`}
   </div>`;
 }
 
@@ -625,14 +833,9 @@ function viewTasks() {
   const tab = (id, label) => `<button class="${f === id ? 'on' : ''}" data-act="filter" data-id="${id}">${label}</button>`;
 
   return `
-  <div class="head"><div><h1>Задачи</h1><div class="date">Звёздочка ★ — задача попадёт в «Главные задачи» на обзоре</div></div></div>
+  <div class="head"><div><h1>Задачи</h1><div class="date">Звёздочка ★ — задача попадёт в «Главные задачи» на обзоре</div></div>
+    <button class="plus" title="Новая задача" data-act="addTask">+</button></div>
   <div class="card">
-    <form class="add" data-form="task">
-      <input type="text" name="title" placeholder="Новая задача" required>
-      <input type="date" name="due" title="Срок (необязательно)">
-      <label class="check-label"><input type="checkbox" name="important"> главная</label>
-      <button class="btn small">Добавить</button>
-    </form>
     <div class="tabs">${tab('active', 'Активные')}${tab('done', 'Выполненные')}${tab('all', 'Все')}</div>
     ${list.length ? list.map(x => taskRow(x).replace('</div>', '') + `<button class="del" title="Удалить" data-act="delTask" data-id="${x.id}">×</button></div>`).join('')
       : '<div class="empty">Здесь пусто</div>'}
@@ -643,14 +846,8 @@ const STATUS_COLORS = { 'В работе': 'background:#2d2614;color:var(--work)
 
 function viewProjects() {
   return `
-  <div class="head"><div><h1>Проекты</h1><div class="date">Объекты и рабочие проекты: статус, готовность, срок, заметки</div></div></div>
-  <div class="card" style="margin-bottom:18px">
-    <form class="add" data-form="project" style="margin:0">
-      <input type="text" name="name" placeholder="Название проекта или объекта" required>
-      <input type="date" name="deadline" title="Срок сдачи (необязательно)">
-      <button class="btn small">Добавить</button>
-    </form>
-  </div>
+  <div class="head"><div><h1>Проекты</h1><div class="date">Объекты и рабочие проекты: статус, готовность, срок, заметки</div></div>
+    <button class="plus" title="Новый проект" data-act="addProject">+</button></div>
   <div class="grid">
     ${state.projects.length ? state.projects.map(p => `
       <div class="card">
@@ -665,7 +862,7 @@ function viewProjects() {
         <input type="range" min="0" max="100" step="5" value="${p.progress}" data-chg="projProgress" data-id="${p.id}">
         <textarea placeholder="Заметки: что осталось, кому что отправить…" data-chg="projNote" data-id="${p.id}">${esc(p.note)}</textarea>
       </div>`).join('')
-      : '<div class="card"><div class="empty">Проектов пока нет — добавьте первый</div></div>'}
+      : '<div class="card"><div class="empty">Проектов пока нет — нажмите «+» справа вверху</div></div>'}
   </div>`;
 }
 
@@ -770,13 +967,15 @@ function goalPct(g) {
   return pct(g.steps.filter(s => s.done).length, g.steps.length);
 }
 
-function stepRow(g, s, showGoal = false) {
+// Строка шага в цели: галочка, название (нажатие — окно шага), сколько подшагов сделано, срок
+function stepRow(g, s) {
+  const n = s.items.length, d = s.items.filter(i => i.done).length;
   return `
   <div class="row ${s.done ? 'done' : ''}">
     <input type="checkbox" ${s.done ? 'checked' : ''} data-chg="toggleStep" data-id="${g.id}:${s.id}">
-    <span class="grow">${esc(s.title)}${showGoal ? `<span class="sub ell" title="${esc(g.title)}">${esc(g.title)}</span>` : ''}</span>
+    <span class="grow"><button class="open-step" data-act="openStep" data-id="${g.id}:${s.id}">${esc(s.title)}</button>
+      ${n ? `<span class="sub">подшагов: ${d} из ${n}</span>` : ''}</span>
     ${s.done ? '' : due(s.due)}
-    ${showGoal ? '' : `<button class="del" data-act="delStep" data-id="${g.id}:${s.id}">×</button>`}
   </div>`;
 }
 
@@ -801,6 +1000,7 @@ function viewGoals() {
     ${list.map(g => {
       const steps = [...g.steps].sort((a, b) => a.done - b.done || (a.due || '9999').localeCompare(b.due || '9999'));
       const doneSteps = g.steps.filter(s => s.done).length;
+      const open = ui.openGoals.has(g.id);
       return `
       <div class="card">
         <div class="proj-top">
@@ -816,12 +1016,16 @@ function viewGoals() {
           <input type="number" step="any" value="${g.current}" data-chg="goalCurrent" data-id="${g.id}">
           <span class="tag">из ${g.target} ${esc(g.unit)}</span>
         </div>` : ''}
-        <div style="margin-top:12px">${steps.map(s => stepRow(g, s)).join('')}</div>
+        ${open ? `
+        <div style="margin-top:12px">${steps.map(s => stepRow(g, s)).join('') || '<div class="empty">Шагов пока нет</div>'}</div>
         <form class="add" data-form="step" data-id="${g.id}" style="margin:10px 0 0">
           <input type="text" name="title" placeholder="Новый шаг" required>
           <input type="date" name="due" title="Срок шага (необязательно)">
           <button class="btn small ghost">+ Шаг</button>
-        </form>
+        </form>` : ''}
+        <div class="goal-foot">
+          <button class="chev ${open ? 'open' : ''}" data-act="toggleGoal" data-id="${g.id}">Шаги ${doneSteps}/${g.steps.length}${CHEV}</button>
+        </div>
       </div>`;
     }).join('') || '<div class="card"><div class="empty">В этом разделе целей пока нет — добавьте первую</div></div>'}
   </div>`;
@@ -853,7 +1057,11 @@ function render() {
 }
 
 // Сохранить и перерисовать — вызывается после любого изменения
-function commit() { save(); render(); if (ui.modal === 'review') renderReview(); }
+function commit() {
+  save(); render();
+  if (ui.modal === 'review') renderReview();
+  if (ui.modal === 'step') renderStep();
+}
 const byId = (list, id) => state[list].find(x => x.id === id);
 const remove = (list, id) => { state[list] = state[list].filter(x => x.id !== id); };
 
@@ -884,7 +1092,7 @@ function showBrief() {
 function openModal(kind, html) {
   ui.modal = kind;
   const m = document.getElementById('modal');
-  m.className = 'modal' + (kind === 'review' ? ' wide' : '');
+  m.className = 'modal' + (kind === 'review' || kind === 'step' ? ' wide' : '');
   m.innerHTML = html;
   document.getElementById('overlay').classList.add('show');
 }
@@ -943,6 +1151,80 @@ function renderReview() {
     <button class="btn" data-act="closeModal">Готово</button>`;
 }
 
+// ---------- 6в. Окно шага ----------
+// Сверху — название шага, ниже — что для него нужно: видео, почитать, задания (подшаги).
+function showStep(ref) {
+  ui.stepRef = ref;
+  openModal('step', '');
+  renderStep();
+}
+function getStep(ref) {
+  const [gid, sid] = ref.split(':');
+  const g = byId('goals', gid);
+  return [g, g && g.steps.find(s => s.id === sid)];
+}
+
+function renderStep() {
+  const [g, s] = getStep(ui.stepRef);
+  if (!s) return closeModal();
+  const d = s.items.filter(i => i.done).length;
+  const group = kind => {
+    const list = s.items.filter(i => i.kind === kind).sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999'));
+    return list.length ? `<div class="sec-title">${{ video: 'Видео', read: 'Почитать', task: 'Задания' }[kind]}</div>${list.map(i => itemRow(g, s, i)).join('')}` : '';
+  };
+  document.getElementById('modal').innerHTML = `
+    <h3 style="display:flex;gap:10px;align-items:flex-start"><span style="flex:1">${esc(s.title)}</span>
+      <button class="del" title="Закрыть" data-act="closeModal" style="font-size:24px">×</button></h3>
+    <div class="date">${esc(g.title)}${s.due ? ' · срок ' + fmt(s.due, { day: 'numeric', month: 'long' }) : ''}</div>
+    <div class="meta"><span>Подшагов выполнено: ${d} из ${s.items.length}</span><span>${stepPct(s)}%</span></div>
+    ${bar(stepPct(s), g.cat === 'sport' ? 'green' : '')}
+    ${s.items.length ? group('video') + group('read') + group('task')
+      : '<div class="empty" style="margin-top:12px">Подшагов пока нет — добавьте видео, статью или задание</div>'}
+
+    <div class="sec-title">Добавить подшаг</div>
+    <form class="add" data-form="item" style="margin-top:8px">
+      <select name="kind">${Object.entries(KIND).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
+      <input type="date" name="date" title="В какой день (появится в календаре под «Хобби»)">
+      <input type="text" name="title" placeholder="Что посмотреть, прочитать или сделать" required>
+      <input type="text" name="url" placeholder="Ссылка (необязательно)" style="flex:1 1 100%">
+      <button class="btn small ghost">Добавить</button>
+    </form>
+
+    <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:18px">
+      <label class="check-label" style="color:var(--text)"><input type="checkbox" ${s.done ? 'checked' : ''} data-chg="toggleStep" data-id="${g.id}:${s.id}"> Шаг выполнен</label>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost small" data-act="delStep" data-id="${g.id}:${s.id}">Удалить шаг</button>
+        <button class="btn small" data-act="closeModal">Готово</button>
+      </div>
+    </div>`;
+}
+
+// Окна добавления задачи и проекта (кнопка «+» справа вверху)
+function showAddTask() {
+  openModal('add', `
+    <h3>Новая задача</h3>
+    <form class="add" data-form="task">
+      <input type="text" name="title" placeholder="Что сделать" required>
+      <input type="date" name="due" title="Срок (необязательно)">
+      <label class="check-label"><input type="checkbox" name="important"> главная</label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex:1 1 100%;margin-top:8px">
+        <button type="button" class="btn ghost" data-act="closeModal">Отмена</button><button class="btn">Добавить</button>
+      </div>
+    </form>`);
+}
+function showAddProject() {
+  openModal('add', `
+    <h3>Новый проект</h3>
+    <form class="add" data-form="project">
+      <input type="text" name="name" placeholder="Название проекта или объекта" required>
+      <input type="date" name="deadline" title="Срок сдачи (необязательно)">
+      <span class="tag">срок сдачи — необязательно</span>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex:1 1 100%;margin-top:8px">
+        <button type="button" class="btn ghost" data-act="closeModal">Отмена</button><button class="btn">Добавить</button>
+      </div>
+    </form>`);
+}
+
 // Нажали ✓ / ✎ / ✕. Повторное нажатие той же кнопки снимает отметку.
 function setFact(id, status) {
   const e = byId('events', id);
@@ -955,13 +1237,28 @@ function setFact(id, status) {
 
 // ---------- 7. Реакция на действия пользователя ----------
 // Нажатия: у каждой кнопки есть data-act (что сделать) и data-id (с чем)
+const menu = () => document.getElementById('menu');
 document.addEventListener('click', e => {
   if (e.target.id === 'overlay') return closeModal();
   const el = e.target.closest('[data-act]');
+  // Любое нажатие мимо кнопки «Копия» закрывает её список
+  if (!el || el.dataset.act !== 'menu') menu().classList.remove('show');
   if (!el) return;
   const id = el.dataset.id;
   switch (el.dataset.act) {
     case 'go': ui.view = id; window.scrollTo(0, 0); return render();
+    case 'menu': return menu().classList.toggle('show');
+    case 'openStep': return showStep(id);
+    case 'toggleGoal': ui.openGoals.has(id) ? ui.openGoals.delete(id) : ui.openGoals.add(id); return render();
+    case 'toggleEvent': ui.openEvents.has(id) ? ui.openEvents.delete(id) : ui.openEvents.add(id); return render();
+    case 'addTask': showAddTask(); return document.querySelector('#modal input[type=text]').focus();
+    case 'addProject': showAddProject(); return document.querySelector('#modal input[type=text]').focus();
+    case 'delItem': {
+      const [gid, sid, iid] = id.split(':');
+      const s = byId('goals', gid).steps.find(x => x.id === sid);
+      s.items = s.items.filter(i => i.id !== iid);
+      return commit();
+    }
     case 'name': {
       const n = prompt('Как к вам обращаться?', state.name);
       if (n !== null) { state.name = n.trim(); commit(); }
@@ -1029,6 +1326,11 @@ document.addEventListener('change', e => {
       byId('goals', gid).steps.find(s => s.id === sid).done = el.checked;
       return commit();
     }
+    case 'toggleItem': {
+      const [gid, sid, iid] = id.split(':');
+      byId('goals', gid).steps.find(s => s.id === sid).items.find(i => i.id === iid).done = el.checked;
+      return commit();
+    }
   }
 });
 // Пока тянешь ползунок проекта — цифра процентов меняется сразу
@@ -1049,14 +1351,19 @@ document.addEventListener('submit', e => {
     case 'learn': state.learn.push({ id: uid(), title, done: false }); break;
     case 'hobbyProject': state.hobbyProjects.push({ id: uid(), title, status: 'Идея' }); break;
     case 'goal': state.goals.push({ id: uid(), cat: ui.goalTab, title, deadline: v.deadline || '', current: 0, target: +v.target || 0, unit: (v.unit || '').trim(), steps: [] }); break;
-    case 'step': byId('goals', f.dataset.id).steps.push({ id: uid(), title, due: v.due || '', done: false }); break;
+    case 'step': byId('goals', f.dataset.id).steps.push({ id: uid(), title, due: v.due || '', done: false, items: [] }); break;
+    case 'item': getStep(ui.stepRef)[1].items.push({ id: uid(), kind: v.kind, date: v.date || '', title, url: (v.url || '').trim(), note: '', done: false }); break;
     case 'workout': state.workouts.push({ id: uid(), date: v.date, type: v.type.trim(), minutes: v.minutes ? +v.minutes : '' }); break;
   }
+  if (ui.modal === 'add') closeModal();     // окно «Новая задача / Новый проект» закрываем после добавления
   commit();
 });
 
-// Esc закрывает окно брифинга
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+// Esc закрывает окна и список «Копия»; Enter на кольце шага — как нажатие
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); menu().classList.remove('show'); }
+  if (e.key === 'Enter' && e.target.matches('.ring.click')) e.target.click();
+});
 
 // Включаем работу без интернета (только когда открыто с сайта, а не из файла)
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
@@ -1064,6 +1371,7 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 }
 
 // Поехали!
+seedSteps();
 render();
 </script>
 </body>
