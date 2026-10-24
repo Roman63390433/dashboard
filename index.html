@@ -8,87 +8,116 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#1c1714">
+<meta name="theme-color" content="#0f1113">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Дашборд">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 
 <!-- ============ ОФОРМЛЕНИЕ (CSS) ============
      Здесь описано, как всё выглядит: цвета, отступы, шрифты.
-     Цвета вынесены в «переменные» (--имя), чтобы менять их в одном месте. -->
+     Цвета вынесены в «переменные» (--имя), чтобы менять их в одном месте.
+     Стиль «Графит + кольца»: тёмный фон, салатовый акцент, цифры моноширинным шрифтом. -->
 <style>
   :root {
-    --side: #1c1714;        /* тёмное меню слева */
-    --side-text: #d8cfc7;
-    --side-active: #3a2a22;
-    --bg: #f4efe9;          /* бежевый фон */
-    --card: #ffffff;
-    --text: #1f1a17;
-    --muted: #8a817a;
-    --line: #ece5de;
-    --accent: #d9775a;      /* терракотовый акцент */
-    --accent-soft: #f6e1d8;
-    --blue: #3f6fd8;
-    --green: #3f9a68;
-    --red: #d0533f;
+    color-scheme: dark;     /* календарики и часы в полях ввода — тоже тёмные */
+    --bg: #0f1113;          /* фон страницы */
+    --card: #171a1d;        /* карточки */
+    --card2: #1d2125;       /* вложенные блоки, поля ввода */
+    --text: #e9ebee;
+    --muted: #8a9099;
+    --line: #25292e;
+    --accent: #b6f36a;      /* салатовый акцент */
+    --accent-soft: #25301a;
+    --on-accent: #111;      /* текст на салатовом */
+    --blue: #6aa8ff;
+    --green: #b6f36a;
+    --red: #ff6b5e;
+    /* цвета видов дел в расписании */
+    --study: #6aa8ff; --work: #f5b54a; --sport: #b6f36a; --hobby: #b593ff;
+    --mono: "JetBrains Mono", Consolas, monospace;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
     font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 14px;
   }
-  .app { display: flex; min-height: 100vh; }
+  .app { min-height: 100vh; }
 
-  /* --- Меню слева --- */
-  .sidebar {
-    width: 230px; flex-shrink: 0; background: var(--side); color: var(--side-text);
-    padding: 22px 14px; display: flex; flex-direction: column; gap: 4px;
-    position: sticky; top: 0; height: 100vh;
+  /* --- Верхняя панель: значок, меню-«таблетки», резервная копия --- */
+  .topbar {
+    display: flex; align-items: center; gap: 12px; padding: 14px 24px;
+    position: sticky; top: 0; z-index: 5; background: rgba(15, 17, 19, .92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
   }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #fff; padding: 0 8px 22px; }
-  .avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #f0b89c, var(--accent)); }
+  .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); flex-shrink: 0; }
+  .nav {
+    display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px;
+    overflow-x: auto; scrollbar-width: none; min-width: 0;
+  }
+  .nav::-webkit-scrollbar { display: none; }
   .nav-btn {
-    display: flex; align-items: center; gap: 12px; width: 100%;
-    background: none; border: 0; color: inherit; font: inherit; font-size: 15px;
-    padding: 11px 12px; border-radius: 10px; cursor: pointer; text-align: left;
+    background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px;
+    padding: 8px 15px; border-radius: 999px; cursor: pointer; white-space: nowrap;
   }
-  .nav-btn:hover { background: #2a211c; }
-  .nav-btn.active { background: var(--side-active); color: #fff; font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
-  .nav-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
-  #nav { display: contents; }
-  .side-bottom { margin-top: auto; padding-top: 14px; border-top: 1px solid #2f2621; }
-  .side-caption { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #7d716a; padding: 0 12px 6px; }
-  .nav-btn.small { font-size: 13px; padding: 8px 12px; color: #b5aaa2; }
+  .nav-btn:hover { color: var(--text); }
+  .nav-btn.active { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .side-bottom { margin-left: auto; display: flex; gap: 6px; flex-shrink: 0; }
+  .icon-btn {
+    display: flex; align-items: center; gap: 7px; background: var(--card); border: 1px solid var(--line); color: var(--muted);
+    border-radius: 999px; padding: 8px 13px; font: inherit; font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn svg { width: 16px; height: 16px; }
 
   /* --- Основная часть --- */
-  main { flex: 1; padding: 30px 34px 50px; max-width: 1200px; min-width: 0; }
-  .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
-  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.5px; }
+  main { padding: 28px 24px 60px; max-width: 1240px; margin: 0 auto; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  h1 { font-size: 34px; margin: 0 0 4px; letter-spacing: -1px; font-weight: 800; }
   h1 .name { cursor: pointer; border-bottom: 2px dashed transparent; }
   h1 .name:hover { border-bottom-color: var(--accent); }
   .date { color: var(--muted); }
-  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-  .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .card { background: var(--card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 1px 3px rgba(60, 40, 20, .06); min-width: 0; }
-  .card h2 { font-size: 16px; margin: 0 0 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .grid.three { grid-template-columns: 1.2fr 1fr 1fr; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; min-width: 0; }
+  .card h2 {
+    font-size: 12.5px; margin: 0 0 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 600;
+  }
   .card.wide { grid-column: 1 / -1; }
+
+  /* --- Цифры месяца (плитки) --- */
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-width: 0; }
+  .kpi b { display: block; font-size: 30px; font-family: var(--mono); letter-spacing: -1px; font-weight: 500; }
+  .kpi span { color: var(--muted); font-size: 13px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kpi i { display: block; height: 4px; border-radius: 4px; background: var(--line); margin-top: 10px; overflow: hidden; }
+  .kpi i u { display: block; height: 100%; background: var(--accent); }
+
+  /* --- Крупная цифра и кольца прогресса --- */
+  .big { font-family: Manrope, Inter, sans-serif; font-size: 56px; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+  .big small { font-family: Inter, sans-serif; font-size: 14px; letter-spacing: 0; color: var(--muted); font-weight: 500; }
+  .rings { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .ring { text-align: center; font-size: 12px; width: 82px; color: var(--muted); line-height: 1.3; overflow-wrap: anywhere; }
+  .ring svg { display: block; margin: 0 auto 6px; }
+  .ring .lbl { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ring .num { display: block; color: var(--text); font-family: var(--mono); font-size: 11px; margin-top: 3px; }
 
   /* --- Кнопки и поля ввода --- */
   .btn {
-    background: var(--accent); color: #fff; border: 0; border-radius: 999px;
+    background: var(--accent); color: var(--on-accent); border: 0; border-radius: 999px;
     padding: 11px 20px; font: inherit; font-weight: 600; cursor: pointer;
   }
-  .btn:hover { filter: brightness(1.06); }
+  .btn:hover { filter: brightness(1.08); }
   .btn.small { padding: 7px 14px; font-size: 13px; }
-  .btn.ghost { background: var(--accent-soft); color: var(--accent); }
+  .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); }
   .link { background: none; border: 0; padding: 0; color: var(--blue); font: inherit; font-weight: 500; cursor: pointer; }
-  .del { background: none; border: 0; color: #c4bab2; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
+  .del { background: none; border: 0; color: #4a5058; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
   .del:hover { color: var(--red); }
   input[type=text], input[type=number], input[type=date], input[type=time], select, textarea {
-    font: inherit; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: #fbf9f7; color: var(--text); min-width: 0;
+    font: inherit; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: var(--card2); color: var(--text); min-width: 0;
   }
   textarea { width: 100%; resize: vertical; min-height: 80px; }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
@@ -100,116 +129,136 @@
   /* --- Строки списков --- */
   .row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
   .row:last-child { border-bottom: 0; }
-  .row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .time { color: var(--muted); min-width: 46px; flex-shrink: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .time { color: var(--muted); min-width: 46px; flex-shrink: 0; font-family: var(--mono); font-size: 12px; white-space: nowrap; }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
   .done .grow { text-decoration: line-through; color: var(--muted); }
   .tag { font-size: 12px; color: var(--muted); white-space: nowrap; }
-  .tag.soon { color: var(--accent); font-weight: 500; }
+  .tag.soon { color: var(--work); font-weight: 500; }
   .tag.late { color: var(--red); font-weight: 600; }
-  .star { background: none; border: 0; cursor: pointer; font-size: 17px; color: #d9d0c8; padding: 0 2px; }
+  .star { background: none; border: 0; cursor: pointer; font-size: 17px; color: #3a3f45; padding: 0 2px; }
   .star.on { color: var(--accent); }
   .empty { color: var(--muted); padding: 6px 0; }
   .more { margin-top: 12px; }
 
+  /* --- Пункт расписания: цветная полоса слева по виду дела --- */
+  .ev {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin-bottom: 8px;
+    background: var(--card2); border-radius: 12px; border-left: 3px solid var(--c, var(--muted));
+  }
+  .ev:last-child { margin-bottom: 0; }
+
   /* --- Полоска прогресса --- */
-  .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .bar { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
   .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s; }
   .bar.green > i { background: var(--green); }
-  .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin: 6px 0 2px; gap: 8px; }
+  .bar.work > i { background: var(--work); }
+  .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin: 8px 0 6px; gap: 8px; }
 
   /* --- Фильтры (вкладки) --- */
   .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-  .tabs button { border: 0; background: var(--bg); border-radius: 999px; padding: 6px 14px; font: inherit; cursor: pointer; color: var(--muted); }
-  .tabs button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .tabs button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 14px; font: inherit; cursor: pointer; color: var(--muted); }
+  .tabs button.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
 
   /* --- Календарь --- */
   .cal-head { display: flex; align-items: center; gap: 10px; }
   .cal-head .title { flex: 1; text-align: center; font-weight: 600; text-transform: capitalize; }
-  .cal-nav { background: var(--bg); border: 0; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; }
+  .cal-nav { background: var(--card2); color: var(--text); border: 0; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; }
   .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 14px; }
   .cal .wd { text-align: center; color: var(--muted); font-size: 12px; padding: 4px 0; }
   .cal .day {
-    aspect-ratio: 1 / 0.85; border: 0; background: #fbf9f7; border-radius: 10px; cursor: pointer;
-    font: inherit; position: relative; color: var(--text);
+    aspect-ratio: 1 / 0.85; border: 0; background: var(--card2); border-radius: 10px; cursor: pointer;
+    font: inherit; font-family: var(--mono); font-size: 13px; position: relative; color: var(--text);
   }
   .cal .day:hover { background: var(--accent-soft); }
-  .cal .day.today { font-weight: 700; color: var(--accent); }
-  .cal .day.sel { background: var(--accent); color: #fff; }
+  .cal .day.today { color: var(--accent); font-weight: 700; }
+  .cal .day.sel { background: var(--accent); color: var(--on-accent); }
   .cal .day.has::after { content: ""; position: absolute; bottom: 6px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--accent); }
-  .cal .day.sel.has::after { background: #fff; }
+  .cal .day.sel.has::after { background: var(--on-accent); }
 
   /* --- Проекты --- */
   .proj-top { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
   .proj-top b { flex: 1; font-size: 15px; overflow-wrap: anywhere; }
-  .status { font-size: 12px; padding: 4px 8px; border-radius: 999px; }
+  .status { font-size: 12px; padding: 4px 8px; border-radius: 999px; border: 0; }
   input[type=range] { width: 100%; accent-color: var(--accent); }
 
   /* --- Спорт: неделя --- */
   .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 14px; }
-  .week div { text-align: center; padding: 8px 0; border-radius: 10px; background: var(--bg); font-size: 12px; color: var(--muted); }
-  .week div.on { background: var(--green); color: #fff; font-weight: 600; }
-  .week div.today { outline: 2px solid var(--accent); }
-  .stat { font-size: 26px; font-weight: 700; }
-  .stat small { font-size: 13px; color: var(--muted); font-weight: 400; }
-  .goal-edit { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+  .week div { text-align: center; padding: 8px 0; border-radius: 10px; background: var(--card2); font-size: 12px; color: var(--muted); }
+  .week div.on { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .week div.today { outline: 2px solid var(--work); }
+  .stat { font-size: 30px; font-weight: 500; font-family: var(--mono); letter-spacing: -1px; }
+  .stat small { font-size: 13px; color: var(--muted); font-weight: 400; font-family: Inter, sans-serif; letter-spacing: 0; }
+  .goal-edit { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
   .goal-edit input { width: 90px; }
 
-  /* --- Окно «Брифинг дня» --- */
-  .overlay { position: fixed; inset: 0; background: rgba(28, 23, 20, .45); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  /* --- Всплывающие окна --- */
+  .overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .6); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
   .overlay.show { display: flex; }
-  .modal { background: var(--card); border-radius: 18px; padding: 26px; max-width: 480px; width: 100%; max-height: 92vh; overflow-y: auto; }
+  .modal { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 26px; max-width: 480px; width: 100%; max-height: 92vh; overflow-y: auto; }
   .modal.wide { max-width: 640px; }
   .modal textarea { margin: 12px 0 16px; }
   .tag.ok { color: var(--green); font-weight: 600; }
 
   /* --- Итог дня: кнопки «было / другое время / не было» --- */
-  .rv { border: 1px solid var(--line); background: #fff; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 15px; color: var(--muted); flex-shrink: 0; }
-  .rv.on.rv-done { background: var(--green); border-color: var(--green); color: #fff; }
-  .rv.on.rv-changed { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .rv.on.rv-skipped { background: var(--red); border-color: var(--red); color: #fff; }
+  .rv { border: 1px solid var(--line); background: var(--card2); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 15px; color: var(--muted); flex-shrink: 0; }
+  .rv.on.rv-done { background: var(--green); border-color: var(--green); color: var(--on-accent); }
+  .rv.on.rv-changed { background: var(--work); border-color: var(--work); color: var(--on-accent); }
+  .rv.on.rv-skipped { background: var(--red); border-color: var(--red); color: var(--on-accent); }
   .rv-item { border-bottom: 1px solid var(--line); }
   .rv-item .row { border: 0; }
   .sub { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
   .sub.late { color: var(--red); }
+  .sub.ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fact-edit { display: flex; gap: 6px; align-items: center; padding: 0 0 10px; flex-wrap: wrap; }
   .modal h3 { margin: 0 0 14px; font-size: 20px; }
   .modal ul { padding-left: 18px; line-height: 1.7; margin: 0 0 18px; }
 
-  /* --- Телефон и узкое окно: меню уходит наверх, карточки в одну колонку --- */
+  /* --- Средний экран: карточки обзора в две колонки --- */
+  @media (max-width: 1100px) {
+    .grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  /* --- Телефон и узкое окно: меню во второй строке, карточки в одну колонку --- */
   @media (max-width: 860px) {
-    .app { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; overflow-x: auto; padding: 10px; }
-    .brand, .side-caption { display: none; }
-    .side-bottom { margin: 0; padding: 0 0 0 10px; border-top: 0; border-left: 1px solid #2f2621; display: flex; }
-    .nav-btn { width: auto; white-space: nowrap; padding: 9px 12px; }
+    .topbar { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
+    .logo { display: none; }
+    .side-bottom { margin-left: 0; width: 100%; }
+    .icon-btn { flex: 1; justify-content: center; padding: 7px 8px; font-size: 12.5px; }
+    .nav { width: 100%; }
+    .kpi { padding: 14px; }
+    .kpi b { font-size: 26px; }
+    .kpi span { white-space: normal; font-size: 12px; line-height: 1.3; min-height: 2.6em; }
     main { padding: 20px 16px 40px; }
     .grid, .grid.three { grid-template-columns: minmax(0, 1fr); }
-    h1 { font-size: 24px; }
-    .card { padding: 18px 16px; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    h1 { font-size: 28px; }
+    .big { font-size: 46px; }
+    .rings { gap: 8px; justify-content: space-between; }
+    .ring { width: 70px; font-size: 11px; }
+    .ring svg { width: 64px; height: 64px; }
+    .card { padding: 16px; }
     .modal { padding: 20px 16px; }
-    .row { gap: 9px; }
-    .time { font-size: 13px; }
+    .row, .ev { gap: 9px; }
   }
 </style>
 </head>
 <body>
 
 <!-- ============ РАЗМЕТКА (HTML) ============
-     Каркас страницы: меню слева и пустая область <main>.
+     Каркас страницы: верхняя панель с меню и пустая область <main>.
      Содержимое <main> рисует JavaScript ниже — в зависимости от выбранного раздела. -->
 <div class="app">
-  <nav class="sidebar" id="sidebar">
-    <div class="brand"><span class="avatar"></span>Мой дашборд</div>
-    <div id="nav"></div>
+  <header class="topbar" id="sidebar">
+    <span class="logo" title="Мой дашборд"></span>
+    <nav class="nav" id="nav"></nav>
     <!-- Резервная копия: скачать данные в файл / вернуть их из файла -->
     <div class="side-bottom">
-      <div class="side-caption">Резервная копия</div>
-      <button class="nav-btn small" data-act="export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Сохранить копию</button>
-      <button class="nav-btn small" data-act="import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Загрузить из копии</button>
-      <input type="file" id="importFile" accept=".json,application/json" hidden>
+      <button class="icon-btn" data-act="export" title="Скачать все данные в файл"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Сохранить копию</button>
+      <button class="icon-btn" data-act="import" title="Вернуть данные из файла копии"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>Загрузить из копии</button>
+      <!-- Без фильтра по типу: Android иногда прячет .json, скачанные из мессенджеров -->
+      <input type="file" id="importFile" hidden>
     </div>
-  </nav>
+  </header>
   <main id="view"></main>
 </div>
 
@@ -314,8 +363,8 @@ const VIEWS = [
 ];
 
 function renderSidebar() {
-  document.getElementById('nav').innerHTML = VIEWS.map(([id, label, icon]) =>
-    `<button class="nav-btn ${ui.view === id ? 'active' : ''}" data-act="go" data-id="${id}">${icon}${label}</button>`).join('');
+  document.getElementById('nav').innerHTML = VIEWS.map(([id, label]) =>
+    `<button class="nav-btn ${ui.view === id ? 'active' : ''}" data-act="go" data-id="${id}">${label}</button>`).join('');
 }
 
 
@@ -379,15 +428,29 @@ function notify(html) {
 function viewOverview() {
   const t = today();
   const name = state.name ? `<span class="name" data-act="name">${esc(state.name)}</span>` : `<span class="name" data-act="name">(нажмите, чтобы указать имя)</span>`;
+  const month = t.slice(0, 7);
+  const now = new Date();
+  const monthEnd = ymd(new Date(now.getFullYear(), now.getMonth() + 1, 0));   // последний день месяца
+
+  // Цифры месяца для плиток сверху
+  const monthWorkouts = state.workouts.filter(w => w.date.slice(0, 7) === month);
+  const plannedWorkouts = state.events.filter(e => e.date.slice(0, 7) === month && /^Тренировк/.test(e.title)).length;
+  const monthStepsAll = state.goals.flatMap(g => g.steps).filter(s => s.due && s.due.slice(0, 7) === month);
+  const stepsDone = monthStepsAll.filter(s => s.done).length;
+  const monthTasks = state.tasks.filter(x => x.due && x.due.slice(0, 7) === month);
+  const openTasks = state.tasks.filter(x => !x.done && x.due && x.due <= monthEnd).length;
+  const nearProject = state.projects.filter(p => p.status === 'В работе' && p.deadline).sort((a, b) => a.deadline.localeCompare(b.deadline))[0];
+  const kpi = (num, label, p) => `<div class="kpi"><b>${num}</b><span title="${label}">${label}</span><i><u style="width:${Math.min(100, p)}%"></u></i></div>`;
+
+  // Списки для карточек
   const todayEvents = dayEvents(t);
-  const important = state.tasks.filter(x => x.important).sort((a, b) => a.done - b.done).slice(0, 6);
-  const withDue = state.tasks.filter(x => x.due && !x.done).sort((a, b) => a.due.localeCompare(b.due)).slice(0, 5);
-  const active = state.projects.filter(p => p.status === 'В работе');
-  const ws = weekStart(t);
-  const weekWorkouts = state.workouts.filter(w => w.date >= ws && w.date <= addDays(ws, 6));
-  const learnDone = state.learn.filter(x => x.done).length;
+  const monthSteps = stepsUntil(monthEnd);   // невыполненные, включая просроченные
+  const tasks = state.tasks.filter(x => !x.done && (x.important || x.due))
+    .sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999') || b.important - a.important).slice(0, 7);
+  const projects = state.projects.filter(p => p.status !== 'Сдано');
+  const sportGoals = state.goals.filter(g => g.cat === 'sport');
   const yearGoals = state.goals.filter(g => g.cat === 'year');
-  const weekSteps = stepsUntil(addDays(ws, 6));   // включая просроченные
+  const minutes = monthWorkouts.reduce((s, w) => s + (+w.minutes || 0), 0);
 
   return `
   <div class="head">
@@ -397,70 +460,74 @@ function viewOverview() {
       <button class="btn" data-act="brief">Брифинг дня</button>
     </div>
   </div>
-  <div class="grid">
+
+  <div class="kpis">
+    ${kpi(plannedWorkouts ? `${monthWorkouts.length}/${plannedWorkouts}` : monthWorkouts.length, 'тренировок за месяц', pct(monthWorkouts.length, plannedWorkouts))}
+    ${kpi(`${stepsDone}/${monthStepsAll.length}`, 'шагов к целям за месяц', pct(stepsDone, monthStepsAll.length))}
+    ${kpi(openTasks, 'задач до конца месяца', pct(monthTasks.filter(x => x.done).length, monthTasks.length))}
+    ${nearProject
+      ? kpi(nearProject.progress + '%', `${esc(nearProject.name)}, сдать ${fmt(nearProject.deadline, { day: 'numeric', month: 'short' })}`, nearProject.progress)
+      : kpi(state.projects.filter(p => p.status === 'В работе').length, 'проектов в работе', 0)}
+  </div>
+
+  <div class="grid three">
     <div class="card">
-      <h2>Расписание на сегодня</h2>
+      <h2>Сегодня</h2>
       ${todayEvents.length ? todayEvents.map(e => evRow(e)).join('')
         : '<div class="empty">На сегодня ничего не запланировано</div>'}
       <div class="more"><button class="link" data-act="go" data-id="calendar">Открыть календарь</button></div>
     </div>
 
     <div class="card">
-      <h2>Главные задачи</h2>
-      ${important.length ? important.map(taskRow).join('')
-        : '<div class="empty">Отметьте задачу звёздочкой ★ — она появится здесь</div>'}
+      <h2>Шаги в этом месяце <span class="tag">${monthSteps.length}</span></h2>
+      ${monthSteps.slice(0, 8).map(([g, s]) => stepRow(g, s, true)).join('') || '<div class="empty">В этом месяце шагов нет</div>'}
+      ${monthSteps.length > 8 ? `<div class="more"><button class="link" data-act="go" data-id="goals">Ещё ${monthSteps.length - 8} — все цели</button></div>` : ''}
     </div>
 
     <div class="card">
-      <h2>Задачи на срок</h2>
-      ${withDue.length ? withDue.map(x => `
-        <div class="row"><span class="grow">${esc(x.title)}</span>${due(x.due)}</div>`).join('')
-        : '<div class="empty">Задач со сроком нет</div>'}
-      <div class="more"><button class="link" data-act="go" data-id="tasks">Все задачи</button></div>
-    </div>
-
-    <div class="card">
-      <h2>Проекты в работе</h2>
-      ${active.length ? active.map(p => `
-        <div style="margin-bottom:12px">
-          <div class="meta" style="color:var(--text)"><span>${esc(p.name)}</span>${p.deadline ? due(p.deadline) : ''}</div>
-          ${bar(p.progress)}
-        </div>`).join('')
-        : '<div class="empty">Нет проектов в работе</div>'}
-      <div class="more"><button class="link" data-act="go" data-id="projects">Все проекты</button></div>
-    </div>
-
-    <div class="card">
-      <h2>Спорт на этой неделе</h2>
-      <div class="stat">${weekWorkouts.length} <small>трениров${plural(weekWorkouts.length, 'ка', 'ки', 'ок')} · ${weekWorkouts.reduce((s, w) => s + (+w.minutes || 0), 0)} мин</small></div>
-      ${state.goals.filter(g => g.cat === 'sport').slice(0, 3).map(g => `
-        <div class="meta"><span>${esc(g.title)}</span><span>${g.target > 0 ? `${g.current} / ${g.target} ${esc(g.unit)}` : goalPct(g) + '%'}</span></div>
-        ${bar(goalPct(g), 'green')}`).join('')}
+      <h2>Спорт в этом месяце</h2>
+      <div class="big">${monthWorkouts.length}<small> ${plannedWorkouts ? `из ${plannedWorkouts} ` : ''}трениров${plannedWorkouts ? plural(plannedWorkouts, 'ки', 'ок', 'ок') : plural(monthWorkouts.length, 'ка', 'ки', 'ок')} · ${minutes} мин</small></div>
+      <div class="rings">${sportGoals.slice(0, 4).map((g, i) =>
+        ring(goalPct(g), RING_SPORT[i % RING_SPORT.length], esc(g.title), g.target > 0 ? `${g.current}/${g.target} ${esc(g.unit)}` : '')).join('')}</div>
       <div class="more"><button class="link" data-act="go" data-id="sport">Открыть «Спорт»</button></div>
     </div>
 
     <div class="card">
-      <h2>Хобби: программирование</h2>
-      <div class="meta"><span>Изучено тем</span><span>${learnDone} из ${state.learn.length}</span></div>
-      ${bar(pct(learnDone, state.learn.length))}
-      ${state.hobbyProjects.filter(h => h.status === 'Делаю').map(h => `
-        <div class="row"><span class="dot"></span><span class="grow">${esc(h.title)}</span><span class="tag soon">Делаю</span></div>`).join('')}
-      <div class="more"><button class="link" data-act="go" data-id="hobby">Открыть «Хобби»</button></div>
+      <h2>Задачи</h2>
+      ${tasks.length ? tasks.map(taskRow).join('') : '<div class="empty">Задач со сроком и главных задач нет</div>'}
+      <div class="more"><button class="link" data-act="go" data-id="tasks">Все задачи</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Проекты</h2>
+      ${projects.length ? projects.map(p => `
+        <div class="meta" style="color:var(--text)"><span>${esc(p.name)}</span><span class="tag">${p.status === 'На паузе' ? 'пауза' : p.progress + '%'}${p.deadline ? ' · ' + fmt(p.deadline, { day: 'numeric', month: 'short' }) : ''}</span></div>
+        ${bar(p.progress, p.status === 'На паузе' ? '' : 'work')}`).join('')
+        : '<div class="empty">Проектов нет</div>'}
+      <div class="more"><button class="link" data-act="go" data-id="projects">Все проекты</button></div>
     </div>
 
     <div class="card">
       <h2>Цели на год</h2>
-      ${yearGoals.map(g => `
-        <div class="meta" style="color:var(--text)"><span>${esc(g.title)}</span><span>${goalPct(g)}%</span></div>
-        ${bar(goalPct(g))}`).join('') || '<div class="empty">Целей на год пока нет</div>'}
+      <div class="rings">${yearGoals.map((g, i) => ring(goalPct(g), RING_YEAR[i % RING_YEAR.length], esc(g.title))).join('')
+        || '<div class="empty">Целей на год пока нет</div>'}</div>
       <div class="more"><button class="link" data-act="go" data-id="goals">Все цели</button></div>
     </div>
-
-    <div class="card">
-      <h2>Шаги к целям на этой неделе</h2>
-      ${weekSteps.slice(0, 7).map(([g, s]) => stepRow(g, s, true)).join('') || '<div class="empty">На эту неделю шагов нет</div>'}
-    </div>
   </div>`;
+}
+
+// Кольцо прогресса: процент внутри, подпись снизу (длинная обрезается до 2 строк), под ней цифры
+const RING_SPORT = ['#b6f36a', '#6aa8ff', '#f5b54a', '#b593ff'];
+const RING_YEAR = ['#b6f36a', '#6aa8ff', '#b593ff', '#f5b54a'];
+function ring(p, color, label, num = '') {
+  const r = 30, L = 2 * Math.PI * r, part = Math.max(0, Math.min(p, 100)) / 100;
+  return `<div class="ring" title="${label}">
+    <svg width="76" height="76" viewBox="0 0 76 76">
+      <circle cx="38" cy="38" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="9"/>
+      <circle cx="38" cy="38" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round"
+        stroke-dasharray="${L * part} ${L}" transform="rotate(-90 38 38)"/>
+      <text x="38" y="43" text-anchor="middle" font-size="15" font-weight="800" font-family="Manrope, Inter, sans-serif" fill="#e9ebee">${Math.round(part * 100)}%</text>
+    </svg><span class="lbl">${label}</span>${num ? `<span class="num">${num}</span>` : ''}</div>`;
 }
 
 // ----- Пункты календаря: план и факт -----
@@ -469,6 +536,15 @@ const span = (a, b) => (a || '—') + (b ? '–' + b : '');
 const isChanged = e => e.fact && e.fact.status === 'changed';
 const evStart = e => (isChanged(e) && e.fact.time) || e.time || '';
 const dayEvents = date => state.events.filter(e => e.date === date).sort((a, b) => evStart(a).localeCompare(evStart(b)));
+
+// Цвет полосы — по виду дела (по началу названия)
+function evColor(title) {
+  if (/^Учёба/.test(title)) return 'var(--study)';
+  if (/^Работа/.test(title)) return 'var(--work)';
+  if (/^(Тренировк|Подъём|Зарядк)/.test(title)) return 'var(--sport)';
+  if (/^Хобби/.test(title)) return 'var(--hobby)';
+  return 'var(--muted)';
+}
 
 function evRow(e, del = false) {
   const st = e.fact && e.fact.status;
@@ -479,8 +555,8 @@ function evRow(e, del = false) {
   else if (st === 'skipped') sub = '<span class="sub late">не было</span>';
   const shown = isChanged(e) ? span(e.fact.time, e.fact.end) : span(e.time, e.end);
   return `
-  <div class="row ${st === 'skipped' ? 'done' : ''}">
-    <span class="time">${esc(shown)}</span><span class="dot"></span>
+  <div class="ev ${st === 'skipped' ? 'done' : ''}" style="--c:${evColor(e.title)}">
+    <span class="time">${esc(shown)}</span>
     <span class="grow">${esc(e.title)}${sub}</span>${st === 'done' || e.extra ? '<span class="tag ok">✓</span>' : ''}
     ${del ? `<button class="del" title="Удалить" data-act="delEvent" data-id="${e.id}">×</button>` : ''}
   </div>`;
@@ -563,7 +639,7 @@ function viewTasks() {
   </div>`;
 }
 
-const STATUS_COLORS = { 'В работе': 'background:var(--accent-soft);color:var(--accent)', 'На паузе': 'background:#eee;color:#777', 'Сдано': 'background:#e1f2e8;color:var(--green)' };
+const STATUS_COLORS = { 'В работе': 'background:#2d2614;color:var(--work)', 'На паузе': 'background:var(--card2);color:var(--muted)', 'Сдано': 'background:var(--accent-soft);color:var(--accent)' };
 
 function viewProjects() {
   return `
@@ -698,7 +774,7 @@ function stepRow(g, s, showGoal = false) {
   return `
   <div class="row ${s.done ? 'done' : ''}">
     <input type="checkbox" ${s.done ? 'checked' : ''} data-chg="toggleStep" data-id="${g.id}:${s.id}">
-    <span class="grow">${esc(s.title)}${showGoal ? ` <span class="tag">· ${esc(g.title)}</span>` : ''}</span>
+    <span class="grow">${esc(s.title)}${showGoal ? `<span class="sub ell" title="${esc(g.title)}">${esc(g.title)}</span>` : ''}</span>
     ${s.done ? '' : due(s.due)}
     ${showGoal ? '' : `<button class="del" data-act="delStep" data-id="${g.id}:${s.id}">×</button>`}
   </div>`;
