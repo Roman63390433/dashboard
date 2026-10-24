@@ -219,7 +219,10 @@
   .open-step:hover { color: var(--accent); }
   /* Подшаги под пунктом календаря */
   .ev { flex-wrap: wrap; }
-  .ev-subs { flex-basis: 100%; padding-top: 4px; }
+  .ev > .grow { overflow-wrap: break-word; hyphens: auto; }   /* длинное слово — перенос по слогам с дефисом */
+  .ev-subs { flex-basis: 100%; min-width: 0; padding-top: 4px; }
+  /* Название шага под подшагом — переносится по словам, а не растягивает экран вправо */
+  .ev-subs .open-step { display: block; width: 100%; white-space: normal; overflow-wrap: anywhere; }
   .ev-subs .row { padding: 7px 0; border-color: var(--line); }
 
   /* --- Окно шага: видео, почитать, задания --- */
@@ -300,6 +303,10 @@
     .card { padding: 16px; }
     .modal { padding: 20px 16px; }
     .row, .ev { gap: 9px; }
+    .ev > .time { white-space: normal; width: 42px; min-width: 0; }   /* «18:00–20:00» в две строки — названию больше места */
+    .ev { padding: 10px; }
+    .ev > .chev { padding: 6px 7px; gap: 3px; }
+    .ev > .del { padding: 2px 3px; }
   }
 </style>
 </head>
@@ -762,7 +769,7 @@ function itemRow(g, s, i, inCal = false) {
     <input type="checkbox" ${i.done ? 'checked' : ''} data-chg="toggleItem" data-id="${ref}">
     <span class="grow">${name}
       ${i.note && !inCal ? `<span class="sub">${esc(i.note)}</span>` : ''}
-      ${inCal ? `<button class="open-step sub ell" data-act="openStep" data-id="${g.id}:${s.id}" title="Открыть шаг">${esc(s.title)}</button>` : ''}
+      ${inCal ? `<button class="open-step sub" data-act="openStep" data-id="${g.id}:${s.id}" title="Открыть шаг">${esc(s.title)}</button>` : ''}
     </span>
     ${inCal ? `<span class="kind ${i.kind}">${KIND[i.kind]}</span>`
       : `${i.date ? `<span class="tag">${fmt(i.date, { day: 'numeric', month: 'short' })}</span>` : ''}
@@ -876,6 +883,7 @@ function viewHobby() {
     <div class="card">
       <h2>Что изучаю <span class="tag">${done} из ${state.learn.length}</span></h2>
       ${bar(pct(done, state.learn.length))}
+      ${ui.openLearn ? `
       <form class="add" data-form="learn" style="margin-top:14px">
         <input type="text" name="title" placeholder="Тема: например, «HTML: основы»" required>
         <button class="btn small">Добавить</button>
@@ -885,7 +893,10 @@ function viewHobby() {
           <input type="checkbox" ${x.done ? 'checked' : ''} data-chg="toggleLearn" data-id="${x.id}">
           <span class="grow">${esc(x.title)}</span>
           <button class="del" data-act="delLearn" data-id="${x.id}">×</button>
-        </div>`).join('') || '<div class="empty">Добавьте темы, которые хотите изучить</div>'}
+        </div>`).join('') || '<div class="empty">Добавьте темы, которые хотите изучить</div>'}` : ''}
+      <div class="goal-foot">
+        <button class="chev ${ui.openLearn ? 'open' : ''}" data-act="openLearn">Темы ${done}/${state.learn.length}${CHEV}</button>
+      </div>
     </div>
 
     <div class="card">
@@ -985,17 +996,9 @@ function viewGoals() {
   const tabBtn = (id, label) => `<button class="${tab === id ? 'on' : ''}" data-act="goalTab" data-id="${id}">${label} (${state.goals.filter(g => g.cat === id).length})</button>`;
 
   return `
-  <div class="head"><div><h1>Цели</h1><div class="date">Цель → шаги со сроками. Галочка у шага — и прогресс растёт</div></div></div>
+  <div class="head"><div><h1>Цели</h1><div class="date">Цель → шаги со сроками. Галочка у шага — и прогресс растёт</div></div>
+    <button class="plus" title="Новая цель" data-act="addGoal">+</button></div>
   <div class="tabs">${Object.entries(GOAL_TABS).map(([id, l]) => tabBtn(id, l)).join('')}</div>
-  <div class="card" style="margin-bottom:18px">
-    <form class="add" data-form="goal" style="margin:0">
-      <input type="text" name="title" placeholder="${GOAL_HINT[tab]}" required>
-      <input type="date" name="deadline" title="Срок цели (необязательно)">
-      <input type="number" name="target" placeholder="число" step="any" min="0" title="Если цель измеряется числом (необязательно)" style="width:80px">
-      <input type="text" name="unit" placeholder="ед." style="width:70px;flex:0 0 70px">
-      <button class="btn small">Добавить цель</button>
-    </form>
-  </div>
   <div class="grid">
     ${list.map(g => {
       const steps = [...g.steps].sort((a, b) => a.done - b.done || (a.due || '9999').localeCompare(b.due || '9999'));
@@ -1027,7 +1030,7 @@ function viewGoals() {
           <button class="chev ${open ? 'open' : ''}" data-act="toggleGoal" data-id="${g.id}">Шаги ${doneSteps}/${g.steps.length}${CHEV}</button>
         </div>
       </div>`;
-    }).join('') || '<div class="card"><div class="empty">В этом разделе целей пока нет — добавьте первую</div></div>'}
+    }).join('') || '<div class="card"><div class="empty">В этом разделе целей пока нет — нажмите «+» справа вверху</div></div>'}
   </div>`;
 }
 
@@ -1225,6 +1228,22 @@ function showAddProject() {
     </form>`);
 }
 
+// Новая цель — в раздел, который сейчас открыт («На год», «По спорту»…)
+function showAddGoal() {
+  openModal('add', `
+    <h3>Новая цель · ${GOAL_TABS[ui.goalTab].toLowerCase()}</h3>
+    <form class="add" data-form="goal">
+      <input type="text" name="title" placeholder="${GOAL_HINT[ui.goalTab]}" required>
+      <input type="date" name="deadline" title="Срок цели (необязательно)">
+      <input type="number" name="target" placeholder="число" step="any" min="0" title="Если цель измеряется числом (необязательно)" style="width:80px">
+      <input type="text" name="unit" placeholder="ед." style="width:70px;flex:0 0 70px">
+      <span class="tag" style="flex:1 1 100%;white-space:normal;line-height:1.4">Срок и число — необязательно. Число — если цель меряется, например 30 сек или 70 раз</span>
+      <div style="display:flex;gap:8px;justify-content:flex-end;flex:1 1 100%;margin-top:8px">
+        <button type="button" class="btn ghost" data-act="closeModal">Отмена</button><button class="btn">Добавить</button>
+      </div>
+    </form>`);
+}
+
 // Нажали ✓ / ✎ / ✕. Повторное нажатие той же кнопки снимает отметку.
 function setFact(id, status) {
   const e = byId('events', id);
@@ -1253,6 +1272,8 @@ document.addEventListener('click', e => {
     case 'toggleEvent': ui.openEvents.has(id) ? ui.openEvents.delete(id) : ui.openEvents.add(id); return render();
     case 'addTask': showAddTask(); return document.querySelector('#modal input[type=text]').focus();
     case 'addProject': showAddProject(); return document.querySelector('#modal input[type=text]').focus();
+    case 'addGoal': showAddGoal(); return document.querySelector('#modal input[type=text]').focus();
+    case 'openLearn': ui.openLearn = !ui.openLearn; return render();
     case 'delItem': {
       const [gid, sid, iid] = id.split(':');
       const s = byId('goals', gid).steps.find(x => x.id === sid);
