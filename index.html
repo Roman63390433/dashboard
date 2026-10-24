@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Мой дашборд</title>
+<!-- Чтобы дашборд можно было установить на телефон как приложение -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#1c1714">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Дашборд">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- ============ ОФОРМЛЕНИЕ (CSS) ============
+     Здесь описано, как всё выглядит: цвета, отступы, шрифты.
+     Цвета вынесены в «переменные» (--имя), чтобы менять их в одном месте. -->
+<style>
+  :root {
+    --side: #1c1714;        /* тёмное меню слева */
+    --side-text: #d8cfc7;
+    --side-active: #3a2a22;
+    --bg: #f4efe9;          /* бежевый фон */
+    --card: #ffffff;
+    --text: #1f1a17;
+    --muted: #8a817a;
+    --line: #ece5de;
+    --accent: #d9775a;      /* терракотовый акцент */
+    --accent-soft: #f6e1d8;
+    --blue: #3f6fd8;
+    --green: #3f9a68;
+    --red: #d0533f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 14px;
+  }
+  .app { display: flex; min-height: 100vh; }
+
+  /* --- Меню слева --- */
+  .sidebar {
+    width: 230px; flex-shrink: 0; background: var(--side); color: var(--side-text);
+    padding: 22px 14px; display: flex; flex-direction: column; gap: 4px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: #fff; padding: 0 8px 22px; }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #f0b89c, var(--accent)); }
+  .nav-btn {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: none; border: 0; color: inherit; font: inherit; font-size: 15px;
+    padding: 11px 12px; border-radius: 10px; cursor: pointer; text-align: left;
+  }
+  .nav-btn:hover { background: #2a211c; }
+  .nav-btn.active { background: var(--side-active); color: #fff; font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+  .nav-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+  #nav { display: contents; }
+  .side-bottom { margin-top: auto; padding-top: 14px; border-top: 1px solid #2f2621; }
+  .side-caption { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #7d716a; padding: 0 12px 6px; }
+  .nav-btn.small { font-size: 13px; padding: 8px 12px; color: #b5aaa2; }
+
+  /* --- Основная часть --- */
+  main { flex: 1; padding: 30px 34px 50px; max-width: 1200px; min-width: 0; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -0.5px; }
+  h1 .name { cursor: pointer; border-bottom: 2px dashed transparent; }
+  h1 .name:hover { border-bottom-color: var(--accent); }
+  .date { color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card { background: var(--card); border-radius: 16px; padding: 20px 22px; box-shadow: 0 1px 3px rgba(60, 40, 20, .06); min-width: 0; }
+  .card h2 { font-size: 16px; margin: 0 0 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .card.wide { grid-column: 1 / -1; }
+
+  /* --- Кнопки и поля ввода --- */
+  .btn {
+    background: var(--accent); color: #fff; border: 0; border-radius: 999px;
+    padding: 11px 20px; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn.small { padding: 7px 14px; font-size: 13px; }
+  .btn.ghost { background: var(--accent-soft); color: var(--accent); }
+  .link { background: none; border: 0; padding: 0; color: var(--blue); font: inherit; font-weight: 500; cursor: pointer; }
+  .del { background: none; border: 0; color: #c4bab2; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
+  .del:hover { color: var(--red); }
+  input[type=text], input[type=number], input[type=date], input[type=time], select, textarea {
+    font: inherit; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: #fbf9f7; color: var(--text); min-width: 0;
+  }
+  textarea { width: 100%; resize: vertical; min-height: 80px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+  form.add { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+  form.add input[type=text] { flex: 1 1 180px; }
+  .check-label { display: flex; gap: 6px; align-items: center; color: var(--muted); cursor: pointer; }
+
+  /* --- Строки списков --- */
+  .row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .row:last-child { border-bottom: 0; }
+  .row .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .time { color: var(--muted); width: 46px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .done .grow { text-decoration: line-through; color: var(--muted); }
+  .tag { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .tag.soon { color: var(--accent); font-weight: 500; }
+  .tag.late { color: var(--red); font-weight: 600; }
+  .star { background: none; border: 0; cursor: pointer; font-size: 17px; color: #d9d0c8; padding: 0 2px; }
+  .star.on { color: var(--accent); }
+  .empty { color: var(--muted); padding: 6px 0; }
+  .more { margin-top: 12px; }
+
+  /* --- Полоска прогресса --- */
+  .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s; }
+  .bar.green > i { background: var(--green); }
+  .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin: 6px 0 2px; gap: 8px; }
+
+  /* --- Фильтры (вкладки) --- */
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tabs button { border: 0; background: var(--bg); border-radius: 999px; padding: 6px 14px; font: inherit; cursor: pointer; color: var(--muted); }
+  .tabs button.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+
+  /* --- Календарь --- */
+  .cal-head { display: flex; align-items: center; gap: 10px; }
+  .cal-head .title { flex: 1; text-align: center; font-weight: 600; text-transform: capitalize; }
+  .cal-nav { background: var(--bg); border: 0; border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; }
+  .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 14px; }
+  .cal .wd { text-align: center; color: var(--muted); font-size: 12px; padding: 4px 0; }
+  .cal .day {
+    aspect-ratio: 1 / 0.85; border: 0; background: #fbf9f7; border-radius: 10px; cursor: pointer;
+    font: inherit; position: relative; color: var(--text);
+  }
+  .cal .day:hover { background: var(--accent-soft); }
+  .cal .day.today { font-weight: 700; color: var(--accent); }
+  .cal .day.sel { background: var(--accent); color: #fff; }
+  .cal .day.has::after { content: ""; position: absolute; bottom: 6px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--accent); }
+  .cal .day.sel.has::after { background: #fff; }
+
+  /* --- Проекты --- */
+  .proj-top { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+  .proj-top b { flex: 1; font-size: 15px; overflow-wrap: anywhere; }
+  .status { font-size: 12px; padding: 4px 8px; border-radius: 999px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+
+  /* --- Спорт: неделя --- */
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 14px; }
+  .week div { text-align: center; padding: 8px 0; border-radius: 10px; background: var(--bg); font-size: 12px; color: var(--muted); }
+  .week div.on { background: var(--green); color: #fff; font-weight: 600; }
+  .week div.today { outline: 2px solid var(--accent); }
+  .stat { font-size: 26px; font-weight: 700; }
+  .stat small { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .goal-edit { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+  .goal-edit input { width: 90px; }
+
+  /* --- Окно «Брифинг дня» --- */
+  .overlay { position: fixed; inset: 0; background: rgba(28, 23, 20, .45); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .overlay.show { display: flex; }
+  .modal { background: var(--card); border-radius: 18px; padding: 26px; max-width: 480px; width: 100%; }
+  .modal h3 { margin: 0 0 14px; font-size: 20px; }
+  .modal ul { padding-left: 18px; line-height: 1.7; margin: 0 0 18px; }
+
+  /* --- Телефон и узкое окно: меню уходит наверх, карточки в одну колонку --- */
+  @media (max-width: 860px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; overflow-x: auto; padding: 10px; }
+    .brand, .side-caption { display: none; }
+    .side-bottom { margin: 0; padding: 0 0 0 10px; border-top: 0; border-left: 1px solid #2f2621; display: flex; }
+    .nav-btn { width: auto; white-space: nowrap; padding: 9px 12px; }
+    main { padding: 20px 16px 40px; }
+    .grid, .grid.three { grid-template-columns: 1fr; }
+    h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ РАЗМЕТКА (HTML) ============
+     Каркас страницы: меню слева и пустая область <main>.
+     Содержимое <main> рисует JavaScript ниже — в зависимости от выбранного раздела. -->
+<div class="app">
+  <nav class="sidebar" id="sidebar">
+    <div class="brand"><span class="avatar"></span>Мой дашборд</div>
+    <div id="nav"></div>
+    <!-- Резервная копия: скачать данные в файл / вернуть их из файла -->
+    <div class="side-bottom">
+      <div class="side-caption">Резервная копия</div>
+      <button class="nav-btn small" data-act="export">⭳ Сохранить копию</button>
+      <button class="nav-btn small" data-act="import">⭱ Загрузить из копии</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </nav>
+  <main id="view"></main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- ============ ЛОГИКА (JavaScript) ============ -->
+<script>
+// ---------- 1. Данные и их сохранение ----------
+// Все данные лежат в одном объекте state. После каждого изменения
+// он записывается в память браузера (localStorage), поэтому не теряется при закрытии.
+const KEY = 'my-dashboard-v1';
+
+const EMPTY = {
+  name: '',
+  events: [],        // календарь: { id, date, time, title }
+  tasks: [],         // задачи: { id, title, due, important, done }
+  projects: [],      // проекты: { id, name, status, progress, deadline, note }
+  learn: [],         // хобби — что изучаю: { id, title, done }
+  hobbyProjects: [], // хобби — мои проекты: { id, title, status }
+  hobbyNotes: '',
+  goals: [],         // цели: { id, cat, title, deadline, current, target, unit, steps: [{ id, title, due, done }] }
+                     //   cat — раздел: year (на год), sport, hobby, work
+  workouts: []       // спорт — тренировки: { id, date, type, minutes }
+};
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* память недоступна — работаем без сохранения */ }
+}
+const state = Object.assign(structuredClone(EMPTY), load());
+fixGoals();
+
+// Старые цели (из первой версии) были только спортивные и без шагов — дополняем их
+function fixGoals() {
+  for (const g of state.goals) {
+    g.cat ??= 'sport'; g.steps ??= []; g.deadline ??= ''; g.unit ??= '';
+    g.current ??= 0; g.target ??= 0;
+  }
+}
+
+// Что сейчас открыто на экране (это не сохраняем)
+const ui = { view: 'overview', taskFilter: 'active', calMonth: null, calDay: null, goalTab: 'year' };
+
+
+// ---------- 2. Мелкие помощники ----------
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// Защита: текст пользователя выводим «как текст», а не как код страницы
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Дата в виде '2026-10-24' — так удобно сравнивать и хранить
+function ymd(d) {
+  const z = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+}
+const today = () => ymd(new Date());
+function addDays(str, n) { const d = new Date(str + 'T00:00'); d.setDate(d.getDate() + n); return ymd(d); }
+function weekStart(str) { const d = new Date(str + 'T00:00'); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return ymd(d); }
+const fmt = (str, opts) => new Date(str + 'T00:00').toLocaleDateString('ru-RU', opts);
+
+// Подпись срока: «Сегодня», «Завтра», «Просрочено» или дата
+function due(date) {
+  if (!date) return '';
+  const t = today();
+  if (date < t) return '<span class="tag late">Просрочено</span>';
+  if (date === t) return '<span class="tag soon">Сегодня</span>';
+  if (date === addDays(t, 1)) return '<span class="tag soon">Завтра</span>';
+  return '<span class="tag">' + fmt(date, { day: 'numeric', month: 'short' }) + '</span>';
+}
+
+const bar = (pct, cls = '') => `<div class="bar ${cls}"><i style="width:${Math.max(0, Math.min(100, pct))}%"></i></div>`;
+const pct = (a, b) => b > 0 ? Math.round(a / b * 100) : 0;
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 5) return 'Доброй ночи';
+  if (h < 12) return 'Доброе утро';
+  if (h < 18) return 'Добрый день';
+  return 'Добрый вечер';
+}
+
+
+// ---------- 3. Меню слева ----------
+// Иконки нарисованы линиями (SVG) прямо в коде — без внешних файлов
+const ic = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const VIEWS = [
+  ['overview', 'Обзор', ic('<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>')],
+  ['calendar', 'Календарь', ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>')],
+  ['tasks', 'Задачи', ic('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/>')],
+  ['projects', 'Проекты', ic('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')],
+  ['hobby', 'Хобби', ic('<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>')],
+  ['sport', 'Спорт', ic('<path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/>')],
+  ['goals', 'Цели', ic('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>')]
+];
+
+function renderSidebar() {
+  document.getElementById('nav').innerHTML = VIEWS.map(([id, label, icon]) =>
+    `<button class="nav-btn ${ui.view === id ? 'active' : ''}" data-act="go" data-id="${id}">${icon}${label}</button>`).join('');
+}
+
+
+// ---------- Резервная копия ----------
+// «Сохранить копию»: превращаем все данные в текст (JSON) и отдаём браузеру как файл для скачивания
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `дашборд-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// «Загрузить из копии»: читаем выбранный файл и заменяем им текущие данные
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try { data = JSON.parse(reader.result); } catch (e) { return alert('Это не файл копии дашборда.'); }
+    if (!data || !Array.isArray(data.tasks) || !Array.isArray(data.events)) return alert('Это не файл копии дашборда.');
+    if (!confirm(`Загрузить копию «${file.name}»? Текущие данные будут заменены.`)) return;
+    for (const k of Object.keys(EMPTY)) state[k] = data[k] ?? structuredClone(EMPTY[k]);
+    fixGoals();
+    commit();
+    alert('Данные восстановлены из копии.');
+  };
+  reader.readAsText(file);
+}
+
+
+// ---------- 4. Разделы ----------
+// Каждая функция возвращает HTML-текст раздела
+
+function viewOverview() {
+  const t = today();
+  const name = state.name ? `<span class="name" data-act="name">${esc(state.name)}</span>` : `<span class="name" data-act="name">(нажмите, чтобы указать имя)</span>`;
+  const todayEvents = state.events.filter(e => e.date === t).sort((a, b) => a.time.localeCompare(b.time));
+  const important = state.tasks.filter(x => x.important).sort((a, b) => a.done - b.done).slice(0, 6);
+  const withDue = state.tasks.filter(x => x.due && !x.done).sort((a, b) => a.due.localeCompare(b.due)).slice(0, 5);
+  const active = state.projects.filter(p => p.status === 'В работе');
+  const ws = weekStart(t);
+  const weekWorkouts = state.workouts.filter(w => w.date >= ws && w.date <= addDays(ws, 6));
+  const learnDone = state.learn.filter(x => x.done).length;
+  const yearGoals = state.goals.filter(g => g.cat === 'year');
+  const weekSteps = stepsUntil(addDays(ws, 6));   // включая просроченные
+
+  return `
+  <div class="head">
+    <div><h1>${greeting()}, ${name}</h1><div class="date">${cap(fmt(t, { weekday: 'long', day: 'numeric', month: 'long' }))}</div></div>
+    <button class="btn" data-act="brief">Брифинг дня</button>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h2>Расписание на сегодня</h2>
+      ${todayEvents.length ? todayEvents.map(e => `
+        <div class="row"><span class="time">${esc(e.time || '—')}</span><span class="dot"></span><span class="grow">${esc(e.title)}</span></div>`).join('')
+        : '<div class="empty">На сегодня ничего не запланировано</div>'}
+      <div class="more"><button class="link" data-act="go" data-id="calendar">Открыть календарь</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Главные задачи</h2>
+      ${important.length ? important.map(taskRow).join('')
+        : '<div class="empty">Отметьте задачу звёздочкой ★ — она появится здесь</div>'}
+    </div>
+
+    <div class="card">
+      <h2>Задачи на срок</h2>
+      ${withDue.length ? withDue.map(x => `
+        <div class="row"><span class="grow">${esc(x.title)}</span>${due(x.due)}</div>`).join('')
+        : '<div class="empty">Задач со сроком нет</div>'}
+      <div class="more"><button class="link" data-act="go" data-id="tasks">Все задачи</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Проекты в работе</h2>
+      ${active.length ? active.map(p => `
+        <div style="margin-bottom:12px">
+          <div class="meta" style="color:var(--text)"><span>${esc(p.name)}</span>${p.deadline ? due(p.deadline) : ''}</div>
+          ${bar(p.progress)}
+        </div>`).join('')
+        : '<div class="empty">Нет проектов в работе</div>'}
+      <div class="more"><button class="link" data-act="go" data-id="projects">Все проекты</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Спорт на этой неделе</h2>
+      <div class="stat">${weekWorkouts.length} <small>трениров${plural(weekWorkouts.length, 'ка', 'ки', 'ок')} · ${weekWorkouts.reduce((s, w) => s + (+w.minutes || 0), 0)} мин</small></div>
+      ${state.goals.filter(g => g.cat === 'sport').slice(0, 3).map(g => `
+        <div class="meta"><span>${esc(g.title)}</span><span>${g.target > 0 ? `${g.current} / ${g.target} ${esc(g.unit)}` : goalPct(g) + '%'}</span></div>
+        ${bar(goalPct(g), 'green')}`).join('')}
+      <div class="more"><button class="link" data-act="go" data-id="sport">Открыть «Спорт»</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Хобби: программирование</h2>
+      <div class="meta"><span>Изучено тем</span><span>${learnDone} из ${state.learn.length}</span></div>
+      ${bar(pct(learnDone, state.learn.length))}
+      ${state.hobbyProjects.filter(h => h.status === 'Делаю').map(h => `
+        <div class="row"><span class="dot"></span><span class="grow">${esc(h.title)}</span><span class="tag soon">Делаю</span></div>`).join('')}
+      <div class="more"><button class="link" data-act="go" data-id="hobby">Открыть «Хобби»</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Цели на год</h2>
+      ${yearGoals.map(g => `
+        <div class="meta" style="color:var(--text)"><span>${esc(g.title)}</span><span>${goalPct(g)}%</span></div>
+        ${bar(goalPct(g))}`).join('') || '<div class="empty">Целей на год пока нет</div>'}
+      <div class="more"><button class="link" data-act="go" data-id="goals">Все цели</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Шаги к целям на этой неделе</h2>
+      ${weekSteps.slice(0, 7).map(([g, s]) => stepRow(g, s, true)).join('') || '<div class="empty">На эту неделю шагов нет</div>'}
+    </div>
+  </div>`;
+}
+
+// Одна строка задачи — используется в «Обзоре» и в «Задачах»
+function taskRow(x) {
+  return `
+  <div class="row ${x.done ? 'done' : ''}">
+    <input type="checkbox" ${x.done ? 'checked' : ''} data-chg="toggleTask" data-id="${x.id}">
+    <span class="grow">${esc(x.title)}</span>
+    ${x.done ? '' : due(x.due)}
+    <button class="star ${x.important ? 'on' : ''}" title="Главная задача" data-act="star" data-id="${x.id}">★</button>
+  </div>`;
+}
+
+function viewCalendar() {
+  if (!ui.calMonth) ui.calMonth = today().slice(0, 7);
+  if (!ui.calDay) ui.calDay = today();
+  const [y, m] = ui.calMonth.split('-').map(Number);
+  const first = new Date(y, m - 1, 1);
+  const offset = (first.getDay() + 6) % 7;            // сколько пустых клеток до 1-го числа (неделя с понедельника)
+  const days = new Date(y, m, 0).getDate();
+  const busy = new Set(state.events.map(e => e.date));
+
+  let cells = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(d => `<div class="wd">${d}</div>`).join('');
+  cells += '<div></div>'.repeat(offset);
+  for (let d = 1; d <= days; d++) {
+    const date = ymd(new Date(y, m - 1, d));
+    const cls = [date === today() && 'today', date === ui.calDay && 'sel', busy.has(date) && 'has'].filter(Boolean).join(' ');
+    cells += `<button class="day ${cls}" data-act="pickDay" data-id="${date}">${d}</button>`;
+  }
+  const list = state.events.filter(e => e.date === ui.calDay).sort((a, b) => a.time.localeCompare(b.time));
+
+  return `
+  <div class="head"><div><h1>Календарь</h1><div class="date">Нажмите на день, чтобы посмотреть или добавить дела</div></div></div>
+  <div class="grid">
+    <div class="card">
+      <div class="cal-head">
+        <button class="cal-nav" data-act="month" data-id="-1">‹</button>
+        <div class="title">${first.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</div>
+        <button class="cal-nav" data-act="month" data-id="1">›</button>
+      </div>
+      <div class="cal">${cells}</div>
+    </div>
+    <div class="card">
+      <h2>${cap(fmt(ui.calDay, { weekday: 'long', day: 'numeric', month: 'long' }))}</h2>
+      <form class="add" data-form="event">
+        <input type="time" name="time">
+        <input type="text" name="title" placeholder="Что запланировано?" required>
+        <button class="btn small">Добавить</button>
+      </form>
+      ${list.length ? list.map(e => `
+        <div class="row"><span class="time">${esc(e.time || '—')}</span><span class="dot"></span>
+        <span class="grow">${esc(e.title)}</span><button class="del" title="Удалить" data-act="delEvent" data-id="${e.id}">×</button></div>`).join('')
+        : '<div class="empty">В этот день дел нет</div>'}
+    </div>
+  </div>`;
+}
+
+function viewTasks() {
+  const f = ui.taskFilter;
+  const list = state.tasks
+    .filter(x => f === 'all' || (f === 'active' ? !x.done : x.done))
+    .sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999'));
+  const tab = (id, label) => `<button class="${f === id ? 'on' : ''}" data-act="filter" data-id="${id}">${label}</button>`;
+
+  return `
+  <div class="head"><div><h1>Задачи</h1><div class="date">Звёздочка ★ — задача попадёт в «Главные задачи» на обзоре</div></div></div>
+  <div class="card">
+    <form class="add" data-form="task">
+      <input type="text" name="title" placeholder="Новая задача" required>
+      <input type="date" name="due" title="Срок (необязательно)">
+      <label class="check-label"><input type="checkbox" name="important"> главная</label>
+      <button class="btn small">Добавить</button>
+    </form>
+    <div class="tabs">${tab('active', 'Активные')}${tab('done', 'Выполненные')}${tab('all', 'Все')}</div>
+    ${list.length ? list.map(x => taskRow(x).replace('</div>', '') + `<button class="del" title="Удалить" data-act="delTask" data-id="${x.id}">×</button></div>`).join('')
+      : '<div class="empty">Здесь пусто</div>'}
+  </div>`;
+}
+
+const STATUS_COLORS = { 'В работе': 'background:var(--accent-soft);color:var(--accent)', 'На паузе': 'background:#eee;color:#777', 'Сдано': 'background:#e1f2e8;color:var(--green)' };
+
+function viewProjects() {
+  return `
+  <div class="head"><div><h1>Проекты</h1><div class="date">Объекты и рабочие проекты: статус, готовность, срок, заметки</div></div></div>
+  <div class="card" style="margin-bottom:18px">
+    <form class="add" data-form="project" style="margin:0">
+      <input type="text" name="name" placeholder="Название проекта или объекта" required>
+      <input type="date" name="deadline" title="Срок сдачи (необязательно)">
+      <button class="btn small">Добавить</button>
+    </form>
+  </div>
+  <div class="grid">
+    ${state.projects.length ? state.projects.map(p => `
+      <div class="card">
+        <div class="proj-top">
+          <b>${esc(p.name)}</b>
+          <select data-chg="projStatus" data-id="${p.id}" class="status" style="${STATUS_COLORS[p.status]}">
+            ${Object.keys(STATUS_COLORS).map(s => `<option ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <button class="del" title="Удалить проект" data-act="delProject" data-id="${p.id}">×</button>
+        </div>
+        <div class="meta"><span>Готовность: <b id="pp-${p.id}">${p.progress}%</b></span><span>${p.deadline ? 'Срок: ' + fmt(p.deadline, { day: 'numeric', month: 'long' }) : ''}</span></div>
+        <input type="range" min="0" max="100" step="5" value="${p.progress}" data-chg="projProgress" data-id="${p.id}">
+        <textarea placeholder="Заметки: что осталось, кому что отправить…" data-chg="projNote" data-id="${p.id}">${esc(p.note)}</textarea>
+      </div>`).join('')
+      : '<div class="card"><div class="empty">Проектов пока нет — добавьте первый</div></div>'}
+  </div>`;
+}
+
+const HOBBY_STATUS = ['Идея', 'Делаю', 'Готово'];
+
+function viewHobby() {
+  const done = state.learn.filter(x => x.done).length;
+  return `
+  <div class="head"><div><h1>Хобби: программирование</h1><div class="date">План учёбы, свои сайты и приложения, заметки</div></div></div>
+  <div class="grid">
+    <div class="card">
+      <h2>Что изучаю <span class="tag">${done} из ${state.learn.length}</span></h2>
+      ${bar(pct(done, state.learn.length))}
+      <form class="add" data-form="learn" style="margin-top:14px">
+        <input type="text" name="title" placeholder="Тема: например, «HTML: основы»" required>
+        <button class="btn small">Добавить</button>
+      </form>
+      ${state.learn.map(x => `
+        <div class="row ${x.done ? 'done' : ''}">
+          <input type="checkbox" ${x.done ? 'checked' : ''} data-chg="toggleLearn" data-id="${x.id}">
+          <span class="grow">${esc(x.title)}</span>
+          <button class="del" data-act="delLearn" data-id="${x.id}">×</button>
+        </div>`).join('') || '<div class="empty">Добавьте темы, которые хотите изучить</div>'}
+    </div>
+
+    <div class="card">
+      <h2>Мои проекты</h2>
+      <form class="add" data-form="hobbyProject">
+        <input type="text" name="title" placeholder="Например, «Фитнес-приложение»" required>
+        <button class="btn small">Добавить</button>
+      </form>
+      ${state.hobbyProjects.map(h => `
+        <div class="row">
+          <span class="dot"></span><span class="grow">${esc(h.title)}</span>
+          <select data-chg="hobbyStatus" data-id="${h.id}">${HOBBY_STATUS.map(s => `<option ${s === h.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
+          <button class="del" data-act="delHobby" data-id="${h.id}">×</button>
+        </div>`).join('') || '<div class="empty">Пока нет проектов</div>'}
+    </div>
+
+    <div class="card wide">
+      <h2>Заметки по учёбе</h2>
+      <textarea style="min-height:140px" placeholder="Полезные ссылки, команды, что понял сегодня…" data-chg="hobbyNotes">${esc(state.hobbyNotes)}</textarea>
+    </div>
+  </div>`;
+}
+
+function viewSport() {
+  const t = today();
+  const ws = weekStart(t);
+  const weekDates = [...Array(7)].map((_, i) => addDays(ws, i));
+  const trained = new Set(state.workouts.map(w => w.date));
+  const week = state.workouts.filter(w => w.date >= ws && w.date <= weekDates[6]);
+  const recent = [...state.workouts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
+
+  const month = state.workouts.filter(w => w.date.slice(0, 7) === t.slice(0, 7));
+  const sportGoals = state.goals.filter(g => g.cat === 'sport');
+
+  return `
+  <div class="head"><div><h1>Спорт</h1><div class="date">Тренировки по дням</div></div></div>
+  <div class="grid">
+    <div class="card">
+      <h2>Эта неделя</h2>
+      <div class="week">${weekDates.map((d, i) =>
+        `<div class="${trained.has(d) ? 'on' : ''} ${d === t ? 'today' : ''}">${['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'][i]}</div>`).join('')}</div>
+      <div class="stat">${week.length} <small>трениров${plural(week.length, 'ка', 'ки', 'ок')} · ${week.reduce((s, w) => s + (+w.minutes || 0), 0)} мин</small></div>
+      <div class="meta" style="margin-top:10px"><span>За этот месяц</span><span>${month.length} трениров${plural(month.length, 'ка', 'ки', 'ок')} · ${month.reduce((s, w) => s + (+w.minutes || 0), 0)} мин</span></div>
+      <h2 style="margin-top:22px">Цели по спорту</h2>
+      ${sportGoals.map(g => `
+        <div class="meta" style="color:var(--text)"><span>${esc(g.title)}</span><span>${goalPct(g)}%</span></div>
+        ${bar(goalPct(g), 'green')}`).join('') || '<div class="empty">Целей по спорту пока нет</div>'}
+      <div class="more"><button class="link" data-act="goSportGoals">Открыть цели по спорту</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Записать тренировку</h2>
+      <form class="add" data-form="workout">
+        <input type="date" name="date" value="${t}" required>
+        <input type="text" name="type" placeholder="Что делал: бег, зал, турник…" required>
+        <input type="number" name="minutes" placeholder="мин" min="0" style="width:80px">
+        <button class="btn small">Записать</button>
+      </form>
+      ${recent.map(w => `
+        <div class="row"><span class="time" style="width:60px">${fmt(w.date, { day: 'numeric', month: 'short' })}</span>
+        <span class="grow">${esc(w.type)}</span><span class="tag">${w.minutes ? w.minutes + ' мин' : ''}</span>
+        <button class="del" data-act="delWorkout" data-id="${w.id}">×</button></div>`).join('') || '<div class="empty">Тренировок пока нет</div>'}
+    </div>
+  </div>`;
+}
+
+// ----- Цели -----
+const GOAL_TABS = { year: 'Цели на год', sport: 'По спорту', hobby: 'По хобби', work: 'По работе' };
+const GOAL_HINT = {
+  year: 'Главные цели года, например «Сделать своё фитнес-приложение»',
+  sport: 'Например «Подтягивания» — цель 20 раз',
+  hobby: 'Например «Выучить JavaScript»',
+  work: 'Например «Освоить AutoLISP для подготовки подложек»'
+};
+
+// Прогресс цели: если задано число (20 подтягиваний) — по числу, иначе по выполненным шагам
+function goalPct(g) {
+  if (g.target > 0) return pct(g.current, g.target);
+  return pct(g.steps.filter(s => s.done).length, g.steps.length);
+}
+
+function stepRow(g, s, showGoal = false) {
+  return `
+  <div class="row ${s.done ? 'done' : ''}">
+    <input type="checkbox" ${s.done ? 'checked' : ''} data-chg="toggleStep" data-id="${g.id}:${s.id}">
+    <span class="grow">${esc(s.title)}${showGoal ? ` <span class="tag">· ${esc(g.title)}</span>` : ''}</span>
+    ${s.done ? '' : due(s.due)}
+    ${showGoal ? '' : `<button class="del" data-act="delStep" data-id="${g.id}:${s.id}">×</button>`}
+  </div>`;
+}
+
+function viewGoals() {
+  const tab = ui.goalTab;
+  const list = state.goals.filter(g => g.cat === tab);
+  const tabBtn = (id, label) => `<button class="${tab === id ? 'on' : ''}" data-act="goalTab" data-id="${id}">${label} (${state.goals.filter(g => g.cat === id).length})</button>`;
+
+  return `
+  <div class="head"><div><h1>Цели</h1><div class="date">Цель → шаги со сроками. Галочка у шага — и прогресс растёт</div></div></div>
+  <div class="tabs">${Object.entries(GOAL_TABS).map(([id, l]) => tabBtn(id, l)).join('')}</div>
+  <div class="card" style="margin-bottom:18px">
+    <form class="add" data-form="goal" style="margin:0">
+      <input type="text" name="title" placeholder="${GOAL_HINT[tab]}" required>
+      <input type="date" name="deadline" title="Срок цели (необязательно)">
+      <input type="number" name="target" placeholder="число" step="any" min="0" title="Если цель измеряется числом (необязательно)" style="width:80px">
+      <input type="text" name="unit" placeholder="ед." style="width:70px;flex:0 0 70px">
+      <button class="btn small">Добавить цель</button>
+    </form>
+  </div>
+  <div class="grid">
+    ${list.map(g => {
+      const steps = [...g.steps].sort((a, b) => a.done - b.done || (a.due || '9999').localeCompare(b.due || '9999'));
+      const doneSteps = g.steps.filter(s => s.done).length;
+      return `
+      <div class="card">
+        <div class="proj-top">
+          <b>${esc(g.title)}</b>
+          ${g.deadline ? `<span class="tag">до ${fmt(g.deadline, { day: 'numeric', month: 'long', year: 'numeric' })}</span>` : ''}
+          <button class="del" title="Удалить цель" data-act="delGoal" data-id="${g.id}">×</button>
+        </div>
+        <div class="meta"><span>${g.target > 0 ? 'Прогресс' : `Шагов выполнено: ${doneSteps} из ${g.steps.length}`}</span><span>${goalPct(g)}%</span></div>
+        ${bar(goalPct(g), tab === 'sport' ? 'green' : '')}
+        ${g.target > 0 ? `
+        <div class="goal-edit">
+          <span class="tag">Сейчас:</span>
+          <input type="number" step="any" value="${g.current}" data-chg="goalCurrent" data-id="${g.id}">
+          <span class="tag">из ${g.target} ${esc(g.unit)}</span>
+        </div>` : ''}
+        <div style="margin-top:12px">${steps.map(s => stepRow(g, s)).join('')}</div>
+        <form class="add" data-form="step" data-id="${g.id}" style="margin:10px 0 0">
+          <input type="text" name="title" placeholder="Новый шаг" required>
+          <input type="date" name="due" title="Срок шага (необязательно)">
+          <button class="btn small ghost">+ Шаг</button>
+        </form>
+      </div>`;
+    }).join('') || '<div class="card"><div class="empty">В этом разделе целей пока нет — добавьте первую</div></div>'}
+  </div>`;
+}
+
+// Все невыполненные шаги всех целей со сроком до указанной даты
+function stepsUntil(date) {
+  const out = [];
+  for (const g of state.goals) for (const s of g.steps) if (!s.done && s.due && s.due <= date) out.push([g, s]);
+  return out.sort((a, b) => a[1].due.localeCompare(b[1].due));
+}
+
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+// Русские окончания: 1 тренировка, 2 тренировки, 5 тренировок
+function plural(n, one, few, many) {
+  const a = n % 10, b = n % 100;
+  if (a === 1 && b !== 11) return one;
+  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return few;
+  return many;
+}
+
+
+// ---------- 5. Отрисовка ----------
+const RENDER = { overview: viewOverview, calendar: viewCalendar, tasks: viewTasks, projects: viewProjects, hobby: viewHobby, sport: viewSport, goals: viewGoals };
+
+function render() {
+  renderSidebar();
+  document.getElementById('view').innerHTML = RENDER[ui.view]();
+}
+
+// Сохранить и перерисовать — вызывается после любого изменения
+function commit() { save(); render(); }
+const byId = (list, id) => state[list].find(x => x.id === id);
+const remove = (list, id) => { state[list] = state[list].filter(x => x.id !== id); };
+
+
+// ---------- 6. Брифинг дня ----------
+function showBrief() {
+  const t = today();
+  const ev = state.events.filter(e => e.date === t).sort((a, b) => a.time.localeCompare(b.time));
+  const open = state.tasks.filter(x => !x.done);
+  const late = open.filter(x => x.due && x.due < t);
+  const dueToday = open.filter(x => x.due === t);
+  const ws = weekStart(t);
+  const wk = state.workouts.filter(w => w.date >= ws && w.date <= addDays(ws, 6)).length;
+  const items = [
+    ev.length ? `Дел в календаре: ${ev.length}. Первое — ${esc(ev[0].time || 'без времени')}, «${esc(ev[0].title)}».` : 'В календаре на сегодня пусто.',
+    dueToday.length ? `Задач со сроком сегодня: ${dueToday.length} — ${dueToday.map(x => '«' + esc(x.title) + '»').join(', ')}.` : 'Задач со сроком на сегодня нет.',
+    late.length ? `<b style="color:var(--red)">Просрочено: ${late.length}</b> — ${late.map(x => '«' + esc(x.title) + '»').join(', ')}.` : 'Просроченных задач нет.',
+    `Активных задач всего: ${open.length}.`,
+    (n => n ? `Шагов к целям на этой неделе: ${n}.` : 'Шагов к целям на этой неделе нет.')(stepsUntil(addDays(ws, 6)).length),
+    `Проектов в работе: ${state.projects.filter(p => p.status === 'В работе').length}.`,
+    `Тренировок на этой неделе: ${wk}.`
+  ];
+  document.getElementById('modal').innerHTML = `
+    <h3>Брифинг дня</h3><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>
+    <button class="btn" data-act="closeBrief">Понятно</button>`;
+  document.getElementById('overlay').classList.add('show');
+}
+
+
+// ---------- 7. Реакция на действия пользователя ----------
+// Нажатия: у каждой кнопки есть data-act (что сделать) и data-id (с чем)
+document.addEventListener('click', e => {
+  if (e.target.id === 'overlay') return document.getElementById('overlay').classList.remove('show');
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const id = el.dataset.id;
+  switch (el.dataset.act) {
+    case 'go': ui.view = id; window.scrollTo(0, 0); return render();
+    case 'name': {
+      const n = prompt('Как к вам обращаться?', state.name);
+      if (n !== null) { state.name = n.trim(); commit(); }
+      return;
+    }
+    case 'brief': return showBrief();
+    case 'export': return exportData();
+    case 'import': return document.getElementById('importFile').click();
+    case 'closeBrief': return document.getElementById('overlay').classList.remove('show');
+    case 'star': { const x = byId('tasks', id); x.important = !x.important; return commit(); }
+    case 'filter': ui.taskFilter = id; return render();
+    case 'goalTab': ui.goalTab = id; return render();
+    case 'goSportGoals': ui.view = 'goals'; ui.goalTab = 'sport'; window.scrollTo(0, 0); return render();
+    case 'delStep': {
+      const [gid, sid] = id.split(':');
+      const g = byId('goals', gid);
+      return ask() && (g.steps = g.steps.filter(s => s.id !== sid), commit());
+    }
+    case 'pickDay': ui.calDay = id; return render();
+    case 'month': {
+      const [y, m] = ui.calMonth.split('-').map(Number);
+      ui.calMonth = ymd(new Date(y, m - 1 + Number(id), 1)).slice(0, 7);
+      return render();
+    }
+    // Удаление — с подтверждением
+    case 'delEvent': return ask() && (remove('events', id), commit());
+    case 'delTask': return ask() && (remove('tasks', id), commit());
+    case 'delProject': return ask('Удалить проект вместе с заметками?') && (remove('projects', id), commit());
+    case 'delLearn': return ask() && (remove('learn', id), commit());
+    case 'delHobby': return ask() && (remove('hobbyProjects', id), commit());
+    case 'delGoal': return ask('Удалить цель вместе со всеми шагами?') && (remove('goals', id), commit());
+    case 'delWorkout': return ask() && (remove('workouts', id), commit());
+  }
+});
+const ask = (q = 'Удалить?') => confirm(q);
+
+// Изменения полей: галочки, выпадающие списки, ползунки, заметки
+document.addEventListener('change', e => {
+  const el = e.target, id = el.dataset.id;
+  if (el.id === 'importFile') {
+    if (el.files[0]) importData(el.files[0]);
+    el.value = '';                          // чтобы можно было выбрать тот же файл ещё раз
+    return;
+  }
+  switch (el.dataset.chg) {
+    case 'toggleTask': byId('tasks', id).done = el.checked; return commit();
+    case 'toggleLearn': byId('learn', id).done = el.checked; return commit();
+    case 'projStatus': byId('projects', id).status = el.value; return commit();
+    case 'projProgress': byId('projects', id).progress = +el.value; return save();
+    case 'projNote': byId('projects', id).note = el.value; return save();
+    case 'hobbyStatus': byId('hobbyProjects', id).status = el.value; return save();
+    case 'hobbyNotes': state.hobbyNotes = el.value; return save();
+    case 'goalCurrent': byId('goals', id).current = +el.value || 0; return commit();
+    case 'toggleStep': {
+      const [gid, sid] = id.split(':');
+      byId('goals', gid).steps.find(s => s.id === sid).done = el.checked;
+      return commit();
+    }
+  }
+});
+// Пока тянешь ползунок проекта — цифра процентов меняется сразу
+document.addEventListener('input', e => {
+  if (e.target.dataset.chg === 'projProgress') document.getElementById('pp-' + e.target.dataset.id).textContent = e.target.value + '%';
+});
+
+// Формы добавления: у каждой есть data-form (что добавляем)
+document.addEventListener('submit', e => {
+  e.preventDefault();                       // не перезагружать страницу
+  const f = e.target, v = Object.fromEntries(new FormData(f));
+  const title = (v.title || '').trim();
+  switch (f.dataset.form) {
+    case 'event': state.events.push({ id: uid(), date: ui.calDay, time: v.time, title }); break;
+    case 'task': state.tasks.push({ id: uid(), title, due: v.due || '', important: !!v.important, done: false }); break;
+    case 'project': state.projects.push({ id: uid(), name: v.name.trim(), status: 'В работе', progress: 0, deadline: v.deadline || '', note: '' }); break;
+    case 'learn': state.learn.push({ id: uid(), title, done: false }); break;
+    case 'hobbyProject': state.hobbyProjects.push({ id: uid(), title, status: 'Идея' }); break;
+    case 'goal': state.goals.push({ id: uid(), cat: ui.goalTab, title, deadline: v.deadline || '', current: 0, target: +v.target || 0, unit: (v.unit || '').trim(), steps: [] }); break;
+    case 'step': byId('goals', f.dataset.id).steps.push({ id: uid(), title, due: v.due || '', done: false }); break;
+    case 'workout': state.workouts.push({ id: uid(), date: v.date, type: v.type.trim(), minutes: v.minutes ? +v.minutes : '' }); break;
+  }
+  commit();
+});
+
+// Esc закрывает окно брифинга
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('overlay').classList.remove('show'); });
+
+// Включаем работу без интернета (только когда открыто с сайта, а не из файла)
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Поехали!
+render();
+</script>
+</body>
+</html>
