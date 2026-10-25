@@ -29,15 +29,27 @@
     --text: #e9ebee;
     --muted: #8a9099;
     --line: #25292e;
-    --accent: #b6f36a;      /* салатовый акцент */
+    --accent: #b6f36a;      /* салатовый акцент — заливка кнопок (меняется в «Настройках») */
     --accent-soft: #25301a;
+    --accent-text: #b6f36a; /* акцент для текста, полосок и колец (в светлой теме — темнее) */
     --on-accent: #111;      /* текст на салатовом */
+    --faint: #4a5058;       /* значки-кнопки в покое: ×, ✎, ★ */
+    --track: rgba(255, 255, 255, .09);   /* пустая часть кольца */
     --blue: #6aa8ff;
     --green: #b6f36a;
     --red: #ff6b5e;
     /* цвета видов дел в расписании */
     --study: #6aa8ff; --work: #f5b54a; --sport: #b6f36a; --hobby: #b593ff;
     --mono: "JetBrains Mono", Consolas, monospace;
+  }
+  /* Светлая тема: включается в «Настройках» (у <html> появляется data-theme="light") */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f2f3f0; --card: #ffffff; --card2: #eceee9;
+    --text: #16181b; --muted: #5a6168; --line: #e1e3de; --faint: #a3a8ad;
+    --track: rgba(0, 0, 0, .07);
+    --blue: #1f62c9; --green: #3f7d12; --red: #c7392d;
+    --study: #1f62c9; --work: #b56a00; --sport: #3f7d12; --hobby: #7a4fd0;
   }
   * { box-sizing: border-box; }
   body {
@@ -49,7 +61,7 @@
   /* --- Верхняя панель: значок, меню-«таблетки», резервная копия --- */
   .topbar {
     display: flex; align-items: center; gap: 12px; padding: 14px 24px;
-    position: sticky; top: 0; z-index: 5; background: rgba(15, 17, 19, .92); backdrop-filter: blur(8px);
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
     border-bottom: 1px solid var(--line);
   }
   .logo { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); flex-shrink: 0; }
@@ -65,7 +77,8 @@
   .nav-btn:hover { color: var(--text); }
   .nav-btn.active { background: var(--accent); color: var(--on-accent); font-weight: 600; }
   /* Меню «Копия» в правом верхнем углу: кнопка и выпадающий список */
-  .menu-wrap { margin-left: auto; position: relative; flex-shrink: 0; }
+  .menu-wrap { position: relative; flex-shrink: 0; }
+  .icon-btn.active { color: var(--text); background: var(--card2); }
   .menu {
     position: absolute; right: 0; top: calc(100% + 8px); min-width: 230px; display: none;
     background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 6px;
@@ -127,8 +140,13 @@
   .btn.small { padding: 7px 14px; font-size: 13px; }
   .btn.ghost { background: var(--card); color: var(--text); border: 1px solid var(--line); }
   .link { background: none; border: 0; padding: 0; color: var(--blue); font: inherit; font-weight: 500; cursor: pointer; }
-  .del { background: none; border: 0; color: #4a5058; cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
+  .del { background: none; border: 0; color: var(--faint); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 6px; }
   .del:hover { color: var(--red); }
+  /* Карандаш «Изменить»: открывает окно, где можно поправить или удалить */
+  .pen { background: none; border: 0; color: var(--faint); cursor: pointer; padding: 4px 6px; line-height: 0; flex-shrink: 0; border-radius: 8px; }
+  .pen:hover, .pen:focus-visible { color: var(--text); background: var(--card2); }
+  .pen svg { width: 16px; height: 16px; }
+  .open-step.title { overflow-wrap: anywhere; }
   input[type=text], input[type=number], input[type=date], input[type=time], select, textarea {
     font: inherit; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: var(--card2); color: var(--text); min-width: 0;
   }
@@ -144,13 +162,13 @@
   .row:last-child { border-bottom: 0; }
   .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .time { color: var(--muted); min-width: 46px; flex-shrink: 0; font-family: var(--mono); font-size: 12px; white-space: nowrap; }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-text); flex-shrink: 0; }
   .done .grow { text-decoration: line-through; color: var(--muted); }
   .tag { font-size: 12px; color: var(--muted); white-space: nowrap; }
   .tag.soon { color: var(--work); font-weight: 500; }
   .tag.late { color: var(--red); font-weight: 600; }
-  .star { background: none; border: 0; cursor: pointer; font-size: 17px; color: #3a3f45; padding: 0 2px; }
-  .star.on { color: var(--accent); }
+  .star { background: none; border: 0; cursor: pointer; font-size: 17px; color: var(--faint); padding: 0 2px; }
+  .star.on { color: var(--accent-text); }
   .empty { color: var(--muted); padding: 6px 0; }
   .more { margin-top: 12px; }
 
@@ -163,7 +181,7 @@
 
   /* --- Полоска прогресса --- */
   .bar { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
-  .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .3s; }
+  .bar > i { display: block; height: 100%; background: var(--accent-text); border-radius: 999px; transition: width .3s; }
   .bar.green > i { background: var(--green); }
   .bar.work > i { background: var(--work); }
   .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; margin: 8px 0 6px; gap: 8px; }
@@ -184,9 +202,9 @@
     font: inherit; font-family: var(--mono); font-size: 13px; position: relative; color: var(--text);
   }
   .cal .day:hover { background: var(--accent-soft); }
-  .cal .day.today { color: var(--accent); font-weight: 700; }
+  .cal .day.today { color: var(--accent-text); font-weight: 700; }
   .cal .day.sel { background: var(--accent); color: var(--on-accent); }
-  .cal .day.has::after { content: ""; position: absolute; bottom: 6px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--accent); }
+  .cal .day.has::after { content: ""; position: absolute; bottom: 6px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--accent-text); }
   .cal .day.sel.has::after { background: var(--on-accent); }
 
   /* --- Проекты --- */
@@ -216,7 +234,7 @@
   .goal-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
   /* Название шага — нажимается, открывает окно шага */
   .open-step { background: none; border: 0; padding: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-  .open-step:hover { color: var(--accent); }
+  .open-step:hover { color: var(--accent-text); }
   /* Подшаги под пунктом календаря */
   .ev { flex-wrap: wrap; }
   .ev > .grow { overflow-wrap: break-word; hyphens: auto; }   /* длинное слово — перенос по слогам с дефисом */
@@ -227,11 +245,12 @@
 
   /* --- Окно шага: видео, почитать, задания --- */
   .kind { font-size: 11.5px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
-  .kind.video { color: var(--red); border-color: #4a2723; }
-  .kind.read { color: var(--blue); border-color: #22324a; }
-  .kind.task { color: var(--hobby); border-color: #3a2e52; }
-  .item a { color: var(--text); text-decoration: underline; text-decoration-color: #4a5058; text-underline-offset: 3px; }
-  .item a:hover { text-decoration-color: var(--accent); }
+  .kind.video { color: var(--red); }
+  .kind.read { color: var(--blue); }
+  .kind.task { color: var(--hobby); }
+  .kind.video, .kind.read, .kind.task { border-color: color-mix(in srgb, currentColor 35%, transparent); }
+  .item a { color: var(--text); text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px; }
+  .item a:hover { text-decoration-color: var(--accent-text); }
   .sec-title { font-size: 12.5px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); font-weight: 600; margin: 18px 0 2px; }
 
   /* --- Круглая кнопка «+» (добавить задачу / проект) --- */
@@ -274,6 +293,64 @@
   .fact-edit { display: flex; gap: 6px; align-items: center; padding: 0 0 10px; flex-wrap: wrap; }
   .modal h3 { margin: 0 0 14px; font-size: 20px; }
   .modal ul { padding-left: 18px; line-height: 1.7; margin: 0 0 18px; }
+  .kpi i u { background: var(--accent-text); }
+
+  /* --- Окно «Изменить»: подпись над каждым полем --- */
+  .edit-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+  .fld { display: flex; flex-direction: column; gap: 6px; grid-column: 1 / -1; min-width: 0; }
+  .fld.half { grid-column: auto; }
+  .fld > span { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .fld input:not([type=checkbox]), .fld select { height: 40px; width: 100%; }
+  .fld textarea { margin: 0; min-height: 70px; }
+  .fld.check { flex-direction: row; align-items: center; gap: 8px; color: var(--text); cursor: pointer; }
+  .edit-foot { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+  .edit-foot .btn { padding: 11px 18px; white-space: nowrap; }
+  .edit-foot .btn-danger { margin-right: auto; }
+  .btn-danger { background: none; border: 0; color: var(--red); font: inherit; font-weight: 500; cursor: pointer; padding: 10px 4px; }
+  .btn-danger:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* --- Настройки: слева название и пояснение, справа панель с переключателями --- */
+  .set-sec { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; padding: 28px 0; border-top: 1px solid var(--line); }
+  .set-sec:first-of-type { border-top: 0; padding-top: 8px; }
+  .set-sec > div:first-child h2 { font-size: 16px; margin: 6px 0 6px; font-weight: 600; }
+  .set-sec > div:first-child p { margin: 0; color: var(--muted); line-height: 1.5; }
+  .set-panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 4px 20px; min-width: 0; }
+  .set-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .set-row:last-child { border-bottom: 0; }
+  .set-row > div:first-child { flex: 1 1 220px; min-width: 0; }
+  .set-row b { font-weight: 500; display: block; }
+  .set-row .sub { font-size: 13px; line-height: 1.45; }
+  .set-row .sub.ok { color: var(--green); }
+  /* Переключатель из нескольких вариантов */
+  .seg { display: inline-flex; background: var(--card2); border-radius: 999px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+  .seg button { border: 0; background: none; color: var(--muted); font: inherit; padding: 7px 14px; border-radius: 999px; cursor: pointer; min-height: 34px; }
+  .seg button:hover { color: var(--text); }
+  .seg button.on { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+  /* Кружки цвета акцента */
+  .swatches { display: flex; gap: 14px; flex-wrap: wrap; }
+  .sw { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 0; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+  .sw i { width: 34px; height: 34px; border-radius: 50%; background: var(--c); display: block; transition: transform .15s; }
+  .sw:hover i { transform: scale(1.08); }
+  .sw.on { color: var(--text); font-weight: 600; }
+  .sw.on i { box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--text); }
+  /* Тумблер вкл/выкл (это обычная галочка, просто нарисована иначе) */
+  input[type=checkbox].switch {
+    appearance: none; -webkit-appearance: none; width: 42px; height: 24px; border-radius: 999px; background: var(--card2);
+    border: 1px solid var(--line); position: relative; cursor: pointer; transition: background .15s; margin: 0;
+  }
+  input[type=checkbox].switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s;
+  }
+  input[type=checkbox].switch:checked { background: var(--accent); border-color: var(--accent); }
+  input[type=checkbox].switch:checked::after { transform: translateX(18px); background: var(--on-accent); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chips label { display: flex; align-items: center; gap: 7px; background: var(--card2); border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+  /* Как будет выглядеть уведомление */
+  .notif { display: flex; gap: 12px; background: var(--card2); border-radius: 14px; padding: 12px 14px; margin: 14px 0; }
+  .notif img { width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; }
+  .notif .app-name { font-size: 12px; color: var(--muted); }
+  .notif b { display: block; margin: 2px 0 3px; }
+  .notif p { margin: 0; white-space: pre-line; line-height: 1.45; color: var(--text); font-size: 13px; }
 
   /* --- Средний экран: карточки обзора в две колонки --- */
   @media (max-width: 1100px) {
@@ -306,7 +383,13 @@
     .ev > .time { white-space: normal; width: 42px; min-width: 0; }   /* «18:00–20:00» в две строки — названию больше места */
     .ev { padding: 10px; }
     .ev > .chev { padding: 6px 7px; gap: 3px; }
-    .ev > .del { padding: 2px 3px; }
+    .ev > .del, .ev > .pen { padding: 2px 3px; }
+    .set-sec { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 22px 0; }
+    .set-panel { padding: 2px 16px; }
+    /* Окно «Изменить»: «Отмена» и «Сохранить» — по половине строки, «Удалить» — под ними */
+    .edit-foot { flex-wrap: wrap; }
+    .edit-foot .btn { flex: 1; }
+    .edit-foot .btn-danger { order: 2; width: 100%; margin: 0; }
   }
 </style>
 </head>
@@ -320,6 +403,7 @@
     <span class="logo" title="Мой дашборд"></span>
     <nav class="nav" id="nav"></nav>
     <!-- Резервная копия: одна кнопка, по нажатию — список «Сохранить / Загрузить» -->
+    <button class="icon-btn" data-act="go" data-id="settings" title="Настройки" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="txt">Настройки</span></button>
     <div class="menu-wrap">
       <button class="icon-btn" data-act="menu" title="Резервная копия" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="txt">Копия</span></button>
       <div class="menu" id="menu">
@@ -338,6 +422,8 @@
 </div>
 
 <!-- ============ ЛОГИКА (JavaScript) ============ -->
+<!-- plan.js — текст утреннего уведомления; его же читает «помощник» sw.js -->
+<script src="plan.js"></script>
 <script>
 // ---------- 1. Данные и их сохранение ----------
 // Все данные лежат в одном объекте state. После каждого изменения
@@ -360,7 +446,17 @@ const EMPTY = {
                      //   items — подшаги шага: { id, kind: video | read | task, title, url, note, date, done }
                      //   подшаг с датой виден в календаре под «Хобби» этого дня
   workouts: [],      // спорт — тренировки: { id, date, type, minutes }
-  seed: 0            // какая версия готовых подшагов уже добавлена (см. SEED ниже)
+  seed: 0,           // какая версия готовых подшагов уже добавлена (см. SEED ниже)
+  settings: {        // «Настройки» (шестерёнка справа вверху)
+    theme: 'dark',          // dark | light | auto (как в системе)
+    accent: 'lime',         // ключ из ACCENTS
+    size: 'normal',         // normal | large — размер текста
+    startView: 'overview',  // какой раздел открывать при запуске
+    hidden: [],             // разделы, скрытые из меню
+    notify: { on: false, time: '07:00' },   // утреннее уведомление с планом дня
+    briefOnOpen: false,     // показывать «Брифинг дня» при первом открытии утром
+    briefShown: ''          // в какой день брифинг уже показан сам
+  }
 };
 
 function load() {
@@ -368,9 +464,18 @@ function load() {
 }
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* память недоступна — работаем без сохранения */ }
+  if (state.settings && state.settings.notify.on) shareWithWorker();
 }
 const state = Object.assign(structuredClone(EMPTY), load());
 fixGoals();
+fixSettings();
+
+// Настройки из старой копии могут быть неполными — недостающее берём по умолчанию
+function fixSettings() {
+  const def = structuredClone(EMPTY.settings);
+  state.settings = Object.assign(def, state.settings);
+  state.settings.notify = Object.assign(def.notify, state.settings.notify);
+}
 
 // Старые цели (из первой версии) были только спортивные и без шагов — дополняем их
 function fixGoals() {
@@ -538,8 +643,10 @@ const VIEWS = [
 ];
 
 function renderSidebar() {
-  document.getElementById('nav').innerHTML = VIEWS.map(([id, label]) =>
+  const hidden = state.settings.hidden;   // разделы, скрытые в «Настройках»; «Обзор» есть всегда
+  document.getElementById('nav').innerHTML = VIEWS.filter(([id]) => id === 'overview' || !hidden.includes(id)).map(([id, label]) =>
     `<button class="nav-btn ${ui.view === id ? 'active' : ''}" data-act="go" data-id="${id}">${label}</button>`).join('');
+  document.querySelector('.icon-btn[data-id=settings]').classList.toggle('active', ui.view === 'settings');
 }
 
 
@@ -572,8 +679,11 @@ function importData(file) {
       ${total ? '' : '<br><br><b style="color:var(--red)">Файл пустой — скорее всего, выбран не тот.</b>'}
       <br><br>Текущие данные будут заменены.`,
       () => {
-        for (const k of Object.keys(EMPTY)) state[k] = data[k] ?? structuredClone(EMPTY[k]);
+        // В старых копиях нет настроек — тогда оставляем текущие
+        for (const k of Object.keys(EMPTY)) state[k] = data[k] ?? (k === 'settings' ? state.settings : structuredClone(EMPTY[k]));
         fixGoals();
+        fixSettings();
+        applySettings();
         seedSteps();
         commit();
         notify('Готово: данные загружены.');
@@ -696,18 +806,19 @@ function viewOverview() {
 
 // Кольцо прогресса: процент внутри, подпись снизу (длинная обрезается до 2 строк), под ней цифры.
 // step — «цель:шаг»: тогда кольцо нажимается и открывает окно шага
-const RING_SPORT = ['#b6f36a', '#6aa8ff', '#f5b54a', '#b593ff'];
-const RING_YEAR = ['#b6f36a', '#6aa8ff', '#b593ff', '#f5b54a'];
-const CAT_COLOR = { year: '#6aa8ff', sport: '#b6f36a', hobby: '#b593ff', work: '#f5b54a' };
+// Цвета — через переменные CSS, чтобы кольца перекрашивались вместе с темой и акцентом
+const RING_SPORT = ['var(--accent-text)', 'var(--blue)', 'var(--work)', 'var(--hobby)'];
+const RING_YEAR = ['var(--accent-text)', 'var(--blue)', 'var(--hobby)', 'var(--work)'];
+const CAT_COLOR = { year: 'var(--blue)', sport: 'var(--sport)', hobby: 'var(--hobby)', work: 'var(--work)' };
 function ring(p, color, label, num = '', step = '') {
   const r = 30, L = 2 * Math.PI * r, part = Math.max(0, Math.min(p, 100)) / 100;
   const click = step ? ` click" role="button" tabindex="0" data-act="openStep" data-id="${step}` : '';
   return `<div class="ring${click}" title="${label}">
     <svg width="76" height="76" viewBox="0 0 76 76">
-      <circle cx="38" cy="38" r="${r}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="9"/>
-      <circle cx="38" cy="38" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round"
+      <circle cx="38" cy="38" r="${r}" fill="none" style="stroke:var(--track)" stroke-width="9"/>
+      <circle cx="38" cy="38" r="${r}" fill="none" style="stroke:${color}" stroke-width="9" stroke-linecap="round"
         stroke-dasharray="${L * part} ${L}" transform="rotate(-90 38 38)"/>
-      <text x="38" y="43" text-anchor="middle" font-size="15" font-weight="800" font-family="Manrope, Inter, sans-serif" fill="#e9ebee">${Math.round(part * 100)}%</text>
+      <text x="38" y="43" text-anchor="middle" font-size="15" font-weight="800" font-family="Manrope, Inter, sans-serif" style="fill:var(--text)">${Math.round(part * 100)}%</text>
     </svg><span class="lbl">${label}</span>${num ? (num.startsWith('<') ? num : `<span class="num">${num}</span>`) : ''}</div>`;
 }
 
@@ -741,9 +852,9 @@ function evRow(e, del = false) {
   return `
   <div class="ev ${st === 'skipped' ? 'done' : ''}" style="--c:${evColor(e.title)}">
     <span class="time">${esc(shown)}</span>
-    <span class="grow">${esc(e.title)}${sub}</span>${st === 'done' || e.extra ? '<span class="tag ok">✓</span>' : ''}
+    <span class="grow"><button class="open-step title" data-act="edit" data-id="event:${e.id}" title="Изменить">${esc(e.title)}</button>${sub}</span>${st === 'done' || e.extra ? '<span class="tag ok">✓</span>' : ''}
     ${subs.length ? `<button class="chev ${open ? 'open' : ''}" title="Подшаги на этот день" data-act="toggleEvent" data-id="${e.id}">${subs.filter(([, , i]) => i.done).length}/${subs.length}${CHEV}</button>` : ''}
-    ${del ? `<button class="del" title="Удалить" data-act="delEvent" data-id="${e.id}">×</button>` : ''}
+    ${del ? penBtn('event:' + e.id) : ''}
     ${subs.length && open ? `<div class="ev-subs">${subs.map(([g, s, i]) => itemRow(g, s, i, true)).join('')}</div>` : ''}
   </div>`;
 }
@@ -751,6 +862,9 @@ function evRow(e, del = false) {
 // ----- Подшаги (материалы и задания шага) -----
 const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 const KIND = { video: 'Видео', read: 'Почитать', task: 'Задание' };
+// Кнопка-карандаш: открывает окно «Изменить» (там же — «Удалить»). ref — «вид:id», например task:abc
+const PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+const penBtn = ref => `<button class="pen" title="Изменить или удалить" aria-label="Изменить" data-act="edit" data-id="${ref}">${PEN}</button>`;
 // Все подшаги на дату: [цель, шаг, подшаг]
 function itemsOn(date) {
   const out = [];
@@ -773,18 +887,20 @@ function itemRow(g, s, i, inCal = false) {
     </span>
     ${inCal ? `<span class="kind ${i.kind}">${KIND[i.kind]}</span>`
       : `${i.date ? `<span class="tag">${fmt(i.date, { day: 'numeric', month: 'short' })}</span>` : ''}
-         <button class="del" title="Удалить" data-act="delItem" data-id="${ref}">×</button>`}
+         ${penBtn('item:' + ref)}`}
   </div>`;
 }
 
 // Одна строка задачи — используется в «Обзоре» и в «Задачах»
-function taskRow(x) {
+// pen — показать карандаш (в разделе «Задачи»); на обзоре изменить можно нажатием на название
+function taskRow(x, pen = false) {
   return `
   <div class="row ${x.done ? 'done' : ''}">
     <input type="checkbox" ${x.done ? 'checked' : ''} data-chg="toggleTask" data-id="${x.id}">
-    <span class="grow">${esc(x.title)}</span>
+    <span class="grow"><button class="open-step title" data-act="edit" data-id="task:${x.id}" title="Изменить">${esc(x.title)}</button></span>
     ${x.done ? '' : due(x.due)}
     <button class="star ${x.important ? 'on' : ''}" title="Главная задача" data-act="star" data-id="${x.id}">★</button>
+    ${pen ? penBtn('task:' + x.id) : ''}
   </div>`;
 }
 
@@ -844,12 +960,12 @@ function viewTasks() {
     <button class="plus" title="Новая задача" data-act="addTask">+</button></div>
   <div class="card">
     <div class="tabs">${tab('active', 'Активные')}${tab('done', 'Выполненные')}${tab('all', 'Все')}</div>
-    ${list.length ? list.map(x => taskRow(x).replace('</div>', '') + `<button class="del" title="Удалить" data-act="delTask" data-id="${x.id}">×</button></div>`).join('')
+    ${list.length ? list.map(x => taskRow(x, true)).join('')
       : '<div class="empty">Здесь пусто</div>'}
   </div>`;
 }
 
-const STATUS_COLORS = { 'В работе': 'background:#2d2614;color:var(--work)', 'На паузе': 'background:var(--card2);color:var(--muted)', 'Сдано': 'background:var(--accent-soft);color:var(--accent)' };
+const STATUS_COLORS = { 'В работе': 'background:color-mix(in srgb, var(--work) 16%, var(--card));color:var(--work)', 'На паузе': 'background:var(--card2);color:var(--muted)', 'Сдано': 'background:var(--accent-soft);color:var(--accent-text)' };
 
 function viewProjects() {
   return `
@@ -863,7 +979,7 @@ function viewProjects() {
           <select data-chg="projStatus" data-id="${p.id}" class="status" style="${STATUS_COLORS[p.status]}">
             ${Object.keys(STATUS_COLORS).map(s => `<option ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
           </select>
-          <button class="del" title="Удалить проект" data-act="delProject" data-id="${p.id}">×</button>
+          ${penBtn('project:' + p.id)}
         </div>
         <div class="meta"><span>Готовность: <b id="pp-${p.id}">${p.progress}%</b></span><span>${p.deadline ? 'Срок: ' + fmt(p.deadline, { day: 'numeric', month: 'long' }) : ''}</span></div>
         <input type="range" min="0" max="100" step="5" value="${p.progress}" data-chg="projProgress" data-id="${p.id}">
@@ -892,7 +1008,7 @@ function viewHobby() {
         <div class="row ${x.done ? 'done' : ''}">
           <input type="checkbox" ${x.done ? 'checked' : ''} data-chg="toggleLearn" data-id="${x.id}">
           <span class="grow">${esc(x.title)}</span>
-          <button class="del" data-act="delLearn" data-id="${x.id}">×</button>
+          ${penBtn('learn:' + x.id)}
         </div>`).join('') || '<div class="empty">Добавьте темы, которые хотите изучить</div>'}` : ''}
       <div class="goal-foot">
         <button class="chev ${ui.openLearn ? 'open' : ''}" data-act="openLearn">Темы ${done}/${state.learn.length}${CHEV}</button>
@@ -909,7 +1025,7 @@ function viewHobby() {
         <div class="row">
           <span class="dot"></span><span class="grow">${esc(h.title)}</span>
           <select data-chg="hobbyStatus" data-id="${h.id}">${HOBBY_STATUS.map(s => `<option ${s === h.status ? 'selected' : ''}>${s}</option>`).join('')}</select>
-          <button class="del" data-act="delHobby" data-id="${h.id}">×</button>
+          ${penBtn('hobby:' + h.id)}
         </div>`).join('') || '<div class="empty">Пока нет проектов</div>'}
     </div>
 
@@ -958,7 +1074,7 @@ function viewSport() {
       ${recent.map(w => `
         <div class="row"><span class="time" style="width:60px">${fmt(w.date, { day: 'numeric', month: 'short' })}</span>
         <span class="grow">${esc(w.type)}</span><span class="tag">${w.minutes ? w.minutes + ' мин' : ''}</span>
-        <button class="del" data-act="delWorkout" data-id="${w.id}">×</button></div>`).join('') || '<div class="empty">Тренировок пока нет</div>'}
+        ${penBtn('workout:' + w.id)}</div>`).join('') || '<div class="empty">Тренировок пока нет</div>'}
     </div>
   </div>`;
 }
@@ -1007,9 +1123,8 @@ function viewGoals() {
       return `
       <div class="card">
         <div class="proj-top">
-          <b>${esc(g.title)}</b>
-          ${g.deadline ? `<span class="tag">до ${fmt(g.deadline, { day: 'numeric', month: 'long', year: 'numeric' })}</span>` : ''}
-          <button class="del" title="Удалить цель" data-act="delGoal" data-id="${g.id}">×</button>
+          <b>${esc(g.title)}${g.deadline ? `<span class="sub" style="font-weight:400">до ${fmt(g.deadline, { day: 'numeric', month: 'long', year: 'numeric' })}</span>` : ''}</b>
+          ${penBtn('goal:' + g.id)}
         </div>
         <div class="meta"><span>${g.target > 0 ? 'Прогресс' : `Шагов выполнено: ${doneSteps} из ${g.steps.length}`}</span><span>${goalPct(g)}%</span></div>
         ${bar(goalPct(g), tab === 'sport' ? 'green' : '')}
@@ -1051,8 +1166,79 @@ function plural(n, one, few, many) {
 }
 
 
+// ----- Настройки -----
+// Цвета акцента: fill — заливка кнопок; dark / light — мягкий фон в тёмной и светлой теме;
+// text — акцент для надписей и колец в светлой теме (яркий цвет на белом не читается)
+const ACCENTS = {
+  lime:   { name: 'Салатовый', fill: '#b6f36a', dark: '#25301a', light: '#e4f5cc', text: '#3f7d12' },
+  teal:   { name: 'Бирюза',    fill: '#5fd4c4', dark: '#16302c', light: '#d2f1ec', text: '#0d7166' },
+  amber:  { name: 'Янтарь',    fill: '#ffb44a', dark: '#33281a', light: '#ffe9cc', text: '#9c5300' },
+  blue:   { name: 'Синий',     fill: '#7cb2ff', dark: '#1a2536', light: '#dae7ff', text: '#1f5cc0' },
+  pink:   { name: 'Розовый',   fill: '#ff8fb8', dark: '#35202a', light: '#ffdeea', text: '#ad2d5c' }
+};
+const sysLight = matchMedia('(prefers-color-scheme: light)');
+const themeNow = () => state.settings.theme === 'auto' ? (sysLight.matches ? 'light' : 'dark') : state.settings.theme;
+
+// Применить тему, акцент и размер текста: меняем переменные CSS у <html>
+function applySettings() {
+  const s = state.settings, theme = themeNow(), a = ACCENTS[s.accent] || ACCENTS.lime, root = document.documentElement;
+  root.dataset.theme = theme;
+  root.style.setProperty('--accent', a.fill);
+  root.style.setProperty('--accent-soft', theme === 'light' ? a.light : a.dark);
+  root.style.setProperty('--accent-text', theme === 'light' ? a.text : a.fill);
+  root.style.zoom = s.size === 'large' ? '1.12' : '';
+  document.querySelector('meta[name=theme-color]').content = theme === 'light' ? '#f2f3f0' : '#0f1113';
+}
+sysLight.addEventListener('change', () => { if (state.settings.theme === 'auto') applySettings(); });
+
+function viewSettings() {
+  const s = state.settings, n = s.notify, [status, statusCls] = notifyStatus();
+  const plan = morningPlan(state, today());
+  const seg = (key, opts) => `<div class="seg">${Object.entries(opts).map(([v, l]) =>
+    `<button class="${s[key] === v ? 'on' : ''}" aria-pressed="${s[key] === v}" data-act="setOpt" data-id="${key}:${v}">${l}</button>`).join('')}</div>`;
+  const sec = (title, text, rows) => `
+  <section class="set-sec">
+    <div><h2>${title}</h2><p>${text}</p></div>
+    <div class="set-panel">${rows}</div>
+  </section>`;
+
+  return `
+  <div class="head"><div><h1>Настройки</h1><div class="date">Всё меняется сразу и сохраняется в этом браузере</div></div></div>
+  ${sec('Оформление', 'Тема, цвет акцента и размер текста.', `
+    <div class="set-row"><div><b>Тема</b></div>${seg('theme', { dark: 'Тёмная', light: 'Светлая', auto: 'Как в системе' })}</div>
+    <div class="set-row"><div><b>Цвет акцента</b><span class="sub">Кнопки, кольца и полоски прогресса</span></div>
+      <div class="swatches">${Object.entries(ACCENTS).map(([k, a]) =>
+        `<button class="sw ${s.accent === k ? 'on' : ''}" style="--c:${a.fill}" aria-pressed="${s.accent === k}" data-act="setOpt" data-id="accent:${k}"><i></i>${a.name}</button>`).join('')}</div></div>
+    <div class="set-row"><div><b>Размер текста</b></div>${seg('size', { normal: 'Обычный', large: 'Крупный' })}</div>`)}
+  ${sec('Утро', 'План дня в уведомлении на телефоне и брифинг при открытии.', `
+    <div class="set-row"><div><b>Уведомление с планом дня</b><span class="sub ${statusCls}">${status}</span></div>
+      <input type="checkbox" class="switch" aria-label="Уведомление с планом дня" data-chg="notifyOn" ${n.on ? 'checked' : ''}></div>
+    <div class="set-row"><div><b>Во сколько</b><span class="sub">Если в это время дашборд закрыт — придёт, когда откроете (до полудня)</span></div>
+      <input type="time" value="${n.time}" data-chg="notifyTime" style="width:120px"></div>
+    <div class="set-row" style="display:block">
+      <b>Так будет выглядеть сегодня</b>
+      <div class="notif"><img src="icon-192.png" alt=""><div><span class="app-name">Дашборд · ${n.time}</span><b>${esc(plan.title)}</b><p>${esc(plan.body)}</p></div></div>
+      <button class="btn ghost small" data-act="testNotify">Прислать сейчас для проверки</button>
+    </div>
+    <div class="set-row"><div><b>Брифинг при первом открытии утром</b><span class="sub">С 4:00 до 12:00, один раз в день</span></div>
+      <input type="checkbox" class="switch" aria-label="Брифинг при первом открытии утром" data-chg="briefOnOpen" ${s.briefOnOpen ? 'checked' : ''}></div>`)}
+  ${sec('Разделы', 'Что открывать при запуске и что показывать в меню.', `
+    <div class="set-row"><div><b>Открывать при запуске</b></div>
+      <select data-chg="startView">${VIEWS.map(([id, l]) => `<option value="${id}" ${s.startView === id ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="set-row" style="display:block"><b style="margin-bottom:10px">Показывать в меню</b>
+      <div class="chips">${VIEWS.slice(1).map(([id, l]) =>
+        `<label><input type="checkbox" data-chg="showView" data-id="${id}" ${s.hidden.includes(id) ? '' : 'checked'}> ${l}</label>`).join('')}</div></div>`)}
+  ${sec('Профиль', 'Имя в приветствии на «Обзоре».', `
+    <div class="set-row"><div><b>Как к вам обращаться</b></div>
+      <input type="text" value="${esc(state.name)}" placeholder="Имя" data-chg="setName" style="width:220px"></div>`)}
+  ${sec('Данные', 'Всё хранится только в этом браузере. Копию стоит сохранять раз в месяц.', `
+    <div class="set-row"><div><b>Резервная копия</b><span class="sub">Файл .json: календарь, задачи, цели, проекты и эти настройки</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost small" data-act="export">Сохранить копию</button><button class="btn ghost small" data-act="import">Загрузить</button></div></div>`)}`;
+}
+
+
 // ---------- 5. Отрисовка ----------
-const RENDER = { overview: viewOverview, calendar: viewCalendar, tasks: viewTasks, projects: viewProjects, hobby: viewHobby, sport: viewSport, goals: viewGoals };
+const RENDER = { overview: viewOverview, calendar: viewCalendar, tasks: viewTasks, projects: viewProjects, hobby: viewHobby, sport: viewSport, goals: viewGoals, settings: viewSettings };
 
 function render() {
   renderSidebar();
@@ -1196,7 +1382,7 @@ function renderStep() {
     <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:18px">
       <label class="check-label" style="color:var(--text)"><input type="checkbox" ${s.done ? 'checked' : ''} data-chg="toggleStep" data-id="${g.id}:${s.id}"> Шаг выполнен</label>
       <div style="display:flex;gap:8px">
-        <button class="btn ghost small" data-act="delStep" data-id="${g.id}:${s.id}">Удалить шаг</button>
+        <button class="btn ghost small" data-act="edit" data-id="step:${g.id}:${s.id}">Изменить шаг</button>
         <button class="btn small" data-act="closeModal">Готово</button>
       </div>
     </div>`;
@@ -1244,6 +1430,183 @@ function showAddGoal() {
     </form>`);
 }
 
+// ---------- 6г. Окно «Изменить» (карандаш или нажатие на название) ----------
+// Для каждого вида записи — какие поля можно поправить. Поле: [ключ, подпись, вид, варианты].
+// Вид: text | date | time | number | check | select | textarea, плюс пометки: half — в пол-ширины, req — обязательно.
+// list — где лежат такие записи в state; у шагов и подшагов свои get (найти) и drop (удалить).
+const stepOf = ref => getStep(ref)[1];
+const itemOf = ref => { const [gid, sid, iid] = ref.split(':'); const s = stepOf(gid + ':' + sid); return [s, s && s.items.find(i => i.id === iid)]; };
+const EDIT = {
+  task:    { name: 'Задача', list: 'tasks', del: 'Удалить задачу?',
+             fields: [['title', 'Что сделать', 'text'], ['due', 'Срок', 'date half'], ['important', 'Главная задача', 'check']] },
+  event:   { name: 'Пункт календаря', list: 'events', del: 'Удалить пункт календаря?',
+             fields: [['title', 'Что запланировано', 'text'], ['date', 'День', 'date req'], ['time', 'Начало', 'time half'], ['end', 'Конец', 'time half']] },
+  project: { name: 'Проект', list: 'projects', del: 'Удалить проект вместе с заметками?',
+             fields: [['name', 'Название', 'text'], ['deadline', 'Срок сдачи', 'date half'], ['status', 'Статус', 'select half', Object.keys(STATUS_COLORS)]] },
+  goal:    { name: 'Цель', list: 'goals', del: 'Удалить цель вместе со всеми шагами?',
+             fields: [['title', 'Цель', 'text'], ['cat', 'Раздел', 'select half', GOAL_TABS], ['deadline', 'Срок', 'date half'],
+                      ['current', 'Сейчас', 'number half'], ['target', 'Цель числом', 'number half'], ['unit', 'Единицы: раз, сек, км…', 'text']] },
+  step:    { name: 'Шаг', back: true, del: 'Удалить шаг вместе с подшагами?',
+             fields: [['title', 'Шаг', 'text'], ['due', 'Срок', 'date half']],
+             get: stepOf, drop: ref => { const [g, s] = getStep(ref); g.steps = g.steps.filter(x => x !== s); } },
+  item:    { name: 'Подшаг', back: true, del: 'Удалить подшаг?',
+             fields: [['title', 'Что посмотреть, прочитать или сделать', 'text'], ['kind', 'Вид', 'select half', KIND],
+                      ['date', 'День (появится в календаре)', 'date half'], ['url', 'Ссылка', 'text'], ['note', 'Пояснение', 'textarea']],
+             get: ref => itemOf(ref)[1], drop: ref => { const [s, i] = itemOf(ref); s.items = s.items.filter(x => x !== i); } },
+  workout: { name: 'Тренировка', list: 'workouts', del: 'Удалить тренировку?',
+             fields: [['type', 'Что делал', 'text'], ['date', 'День', 'date half req'], ['minutes', 'Минут', 'number half']] },
+  learn:   { name: 'Тема', list: 'learn', del: 'Удалить тему?', fields: [['title', 'Тема', 'text']] },
+  hobby:   { name: 'Мой проект', list: 'hobbyProjects', del: 'Удалить проект?',
+             fields: [['title', 'Название', 'text'], ['status', 'Статус', 'select half', HOBBY_STATUS]] }
+};
+const editTarget = () => { const { type, ref } = ui.edit, def = EDIT[type]; return [def, def.get ? def.get(ref) : byId(def.list, ref)]; };
+
+function showEdit(id) {
+  const [type, ...rest] = id.split(':');
+  ui.edit = { type, ref: rest.join(':') };
+  const [def, obj] = editTarget();
+  if (!obj) return;
+  const field = ([k, label, kind, opts], n) => {
+    const [t, ...flags] = kind.split(' '), v = obj[k] ?? '';
+    const cls = 'fld' + (flags.includes('half') ? ' half' : '');
+    const req = n === 0 || flags.includes('req') ? 'required' : '';
+    if (t === 'check') return `<label class="${cls} check"><input type="checkbox" name="${k}" ${v ? 'checked' : ''}> ${label}</label>`;
+    if (t === 'textarea') return `<label class="${cls}"><span>${label}</span><textarea name="${k}">${esc(v)}</textarea></label>`;
+    if (t === 'select') {
+      const pairs = Array.isArray(opts) ? opts.map(o => [o, o]) : Object.entries(opts);
+      return `<label class="${cls}"><span>${label}</span><select name="${k}">${pairs.map(([val, l]) =>
+        `<option value="${esc(val)}" ${val === v ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>`;
+    }
+    return `<label class="${cls}"><span>${label}</span><input type="${t}" name="${k}" value="${esc(v)}" ${t === 'number' ? 'step="any" min="0"' : ''} ${req}></label>`;
+  };
+  openModal('edit', `
+    <h3>${def.name}</h3>
+    <form class="edit-form" data-form="edit">
+      ${def.fields.map(field).join('')}
+      <div class="edit-foot">
+        <button type="button" class="btn-danger" data-act="editDelete">Удалить</button>
+        <button type="button" class="btn ghost" data-act="editCancel">Отмена</button>
+        <button class="btn">Сохранить</button>
+      </div>
+    </form>`);
+}
+
+function saveEdit(form) {
+  const [def, obj] = editTarget();
+  const v = Object.fromEntries(new FormData(form));
+  for (const [k, , kind] of def.fields) {
+    const t = kind.split(' ')[0];
+    if (t === 'check') obj[k] = k in v;
+    else if (t === 'number') obj[k] = v[k] === '' ? (k === 'minutes' ? '' : 0) : +v[k];
+    else obj[k] = String(v[k] ?? '').trim();
+  }
+  leaveEdit();
+  commit();
+}
+// Шаг и подшаг правятся из окна шага — после «Сохранить» или «Отмена» возвращаемся в него
+function leaveEdit() {
+  const back = ui.edit && EDIT[ui.edit.type].back;
+  ui.edit = null;
+  back && ui.stepRef ? showStep(ui.stepRef) : closeModal();
+}
+function deleteEdit() {
+  const [def] = editTarget(), { type, ref } = ui.edit;
+  confirmThen(def.del, () => {
+    def.drop ? def.drop(ref) : remove(def.list, ref);
+    if (type === 'item') showStep(ui.stepRef);
+    commit();
+  }, 'Удалить');
+}
+
+
+// ---------- 6д. Утреннее уведомление с планом дня ----------
+// В заданное время дашборд один раз в день показывает уведомление с планом (текст собирает plan.js).
+// Пока дашборд открыт или свёрнут — проверяет сам, раз в минуту. Когда закрыт — может проверить «помощник» sw.js:
+// Chrome на Android иногда будит его в фоне, если дашборд установлен на экран телефона.
+// У страницы и помощника общая «память» — хранилище Cache: копия данных и дата последнего уведомления.
+const DATA_CACHE = 'dashboard-data';
+const hhmm = () => new Date().toTimeString().slice(0, 5);
+
+async function shareWithWorker() {
+  try { await (await caches.open(DATA_CACHE)).put('state.json', new Response(JSON.stringify(state))); } catch (e) { /* открыто из файла — помощника нет */ }
+}
+async function getMark() {
+  try { const r = await (await caches.open(DATA_CACHE)).match('notified'); return r ? await r.text() : ''; }
+  catch (e) { return ''; }
+}
+async function setMark(date) {
+  try { await (await caches.open(DATA_CACHE)).put('notified', new Response(date)); } catch (e) {}
+}
+
+async function showPlanNotification() {
+  const p = morningPlan(state, today());
+  const opts = { body: p.body, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'morning-plan' };
+  try {
+    const reg = 'serviceWorker' in navigator && await navigator.serviceWorker.getRegistration();
+    if (reg) return await reg.showNotification(p.title, opts);   // на Android работает только так
+    new Notification(p.title, opts);
+  } catch (e) {}
+}
+
+async function checkMorning() {
+  const n = state.settings.notify;
+  if (!n.on || !('Notification' in window) || Notification.permission !== 'granted' || !inMorningWindow(n.time)) return;
+  const t = today();
+  if (await getMark() === t) return;      // сегодня уже было
+  await setMark(t);
+  showPlanNotification();
+}
+
+// Просим браузер иногда будить помощника в фоне. Получится не везде — тогда ui.bgSync = false
+async function registerBackground() {
+  ui.bgSync = false;
+  try {
+    const reg = location.protocol !== 'file:' && await navigator.serviceWorker.getRegistration();
+    if (!reg || !('periodicSync' in reg)) return;
+    const st = await navigator.permissions.query({ name: 'periodic-background-sync' });
+    if (st.state !== 'granted') return;
+    await reg.periodicSync.register('morning-plan', { minInterval: 60 * 60 * 1000 });
+    ui.bgSync = true;
+  } catch (e) {}
+}
+
+function notifyStatus() {
+  if (!('Notification' in window))
+    return ['Этот браузер не показывает уведомления. На iPhone сначала добавьте дашборд «На экран Домой» и откройте его оттуда', 'late'];
+  if (Notification.permission === 'denied')
+    return ['Уведомления запрещены для этого сайта — разрешите их в настройках браузера', 'late'];
+  if (!state.settings.notify.on) return ['Выключено', ''];
+  if (Notification.permission !== 'granted') return ['Нужно разрешение — включите ещё раз', 'late'];
+  return [ui.bgSync
+    ? 'Включено. Телефон проверяет план и в фоне — время прихода может сдвигаться'
+    : 'Включено. Придёт, когда дашборд открыт или свёрнут; закрытый этот браузер в фоне не будит', 'ok'];
+}
+
+async function askPermission() {
+  if (!('Notification' in window)) { notify(notifyStatus()[0] + '.'); return false; }
+  if (await Notification.requestPermission() === 'granted') return true;
+  notify('Без разрешения уведомления не придут. Разрешите их для этого сайта в настройках браузера и попробуйте ещё раз.');
+  return false;
+}
+
+async function setNotify(on, el) {
+  if (on && !await askPermission()) { el.checked = false; return render(); }
+  state.settings.notify.on = on;
+  save();
+  if (on) await registerBackground();
+  else try { const reg = await navigator.serviceWorker.getRegistration(); if (reg && reg.periodicSync) await reg.periodicSync.unregister('morning-plan'); } catch (e) {}
+  render();
+}
+
+// «Брифинг дня» сам при первом открытии утром (если включено в настройках)
+function morningBrief() {
+  const s = state.settings, t = today();
+  if (!s.briefOnOpen || s.briefShown === t || ui.modal || hhmm() < '04:00' || hhmm() >= '12:00') return;
+  s.briefShown = t;
+  save();
+  showBrief();
+}
+
 // Нажали ✓ / ✎ / ✕. Повторное нажатие той же кнопки снимает отметку.
 function setFact(id, status) {
   const e = byId('events', id);
@@ -1274,17 +1637,14 @@ document.addEventListener('click', e => {
     case 'addProject': showAddProject(); return document.querySelector('#modal input[type=text]').focus();
     case 'addGoal': showAddGoal(); return document.querySelector('#modal input[type=text]').focus();
     case 'openLearn': ui.openLearn = !ui.openLearn; return render();
-    case 'delItem': {
-      const [gid, sid, iid] = id.split(':');
-      const s = byId('goals', gid).steps.find(x => x.id === sid);
-      s.items = s.items.filter(i => i.id !== iid);
-      return commit();
-    }
-    case 'name': {
-      const n = prompt('Как к вам обращаться?', state.name);
-      if (n !== null) { state.name = n.trim(); commit(); }
-      return;
-    }
+    // Окно «Изменить»
+    case 'edit': return showEdit(id);
+    case 'editCancel': return leaveEdit();
+    case 'editDelete': return deleteEdit();
+    // Настройки: тема, акцент, размер текста (data-id = «что:значение»)
+    case 'setOpt': { const [k, v] = id.split(':'); state.settings[k] = v; applySettings(); return commit(); }
+    case 'testNotify': return askPermission().then(ok => { if (ok) { showPlanNotification(); render(); } });
+    case 'name': ui.view = 'settings'; window.scrollTo(0, 0); return render();
     case 'brief': return showBrief();
     case 'export': return exportData();
     case 'import': return document.getElementById('importFile').click();
@@ -1295,11 +1655,6 @@ document.addEventListener('click', e => {
     case 'filter': ui.taskFilter = id; return render();
     case 'goalTab': ui.goalTab = id; return render();
     case 'goSportGoals': ui.view = 'goals'; ui.goalTab = 'sport'; window.scrollTo(0, 0); return render();
-    case 'delStep': {
-      const [gid, sid] = id.split(':');
-      const g = byId('goals', gid);
-      return confirmThen('Удалить шаг?', () => { g.steps = g.steps.filter(s => s.id !== sid); commit(); }, 'Удалить');
-    }
     case 'pickDay': ui.calDay = id; return render();
     case 'month': {
       const [y, m] = ui.calMonth.split('-').map(Number);
@@ -1309,17 +1664,9 @@ document.addEventListener('click', e => {
     case 'confirmYes': { const fn = onConfirm; onConfirm = null; closeModal(); return fn && fn(); }
     // Пункт «вне плана» в «Итоге дня» удаляем сразу, без вопроса
     case 'delExtra': remove('events', id); return commit();
-    // Удаление — с подтверждением
-    case 'delEvent': return ask('Удалить пункт календаря?', 'events', id);
-    case 'delTask': return ask('Удалить задачу?', 'tasks', id);
-    case 'delProject': return ask('Удалить проект вместе с заметками?', 'projects', id);
-    case 'delLearn': return ask('Удалить тему?', 'learn', id);
-    case 'delHobby': return ask('Удалить проект?', 'hobbyProjects', id);
-    case 'delGoal': return ask('Удалить цель вместе со всеми шагами?', 'goals', id);
-    case 'delWorkout': return ask('Удалить тренировку?', 'workouts', id);
+    // Остальное удаляется через окно «Изменить» → «Удалить» (с подтверждением)
   }
 });
-const ask = (q, list, id) => confirmThen(q, () => { remove(list, id); commit(); }, 'Удалить');
 
 // Изменения полей: галочки, выпадающие списки, ползунки, заметки
 document.addEventListener('change', e => {
@@ -1342,6 +1689,17 @@ document.addEventListener('change', e => {
     case 'factTime': byId('events', id).fact.time = el.value; save(); return render();
     case 'factEnd': byId('events', id).fact.end = el.value; save(); return render();
     case 'dayNote': (state.days[ui.reviewDate] ??= {}).note = el.value; return save();
+    // Настройки
+    case 'notifyOn': return setNotify(el.checked, el);
+    case 'notifyTime': state.settings.notify.time = el.value || '07:00'; return commit();
+    case 'briefOnOpen': state.settings.briefOnOpen = el.checked; return save();
+    case 'startView': state.settings.startView = el.value; return save();
+    case 'showView': {
+      const h = state.settings.hidden.filter(v => v !== id);
+      state.settings.hidden = el.checked ? h : [...h, id];
+      return commit();
+    }
+    case 'setName': state.name = el.value.trim(); return save();
     case 'toggleStep': {
       const [gid, sid] = id.split(':');
       byId('goals', gid).steps.find(s => s.id === sid).done = el.checked;
@@ -1363,6 +1721,7 @@ document.addEventListener('input', e => {
 document.addEventListener('submit', e => {
   e.preventDefault();                       // не перезагружать страницу
   const f = e.target, v = Object.fromEntries(new FormData(f));
+  if (f.dataset.form === 'edit') return saveEdit(f);
   const title = (v.title || '').trim();
   switch (f.dataset.form) {
     case 'event': state.events.push({ id: uid(), date: ui.calDay, time: v.time, end: v.end || '', title }); break;
@@ -1392,8 +1751,17 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
 }
 
 // Поехали!
+applySettings();
+{ const s = state.settings;    // раздел при запуске — из «Настроек» (если он не скрыт из меню)
+  if (RENDER[s.startView] && !s.hidden.includes(s.startView)) ui.view = s.startView; }
 seedSteps();
 render();
+morningBrief();
+// Утреннее уведомление: проверяем при запуске, при возврате в дашборд и раз в минуту
+if (state.settings.notify.on) { shareWithWorker(); registerBackground().then(() => ui.view === 'settings' && render()); }
+checkMorning();
+setInterval(checkMorning, 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkMorning(); morningBrief(); } });
 </script>
 </body>
 </html>
